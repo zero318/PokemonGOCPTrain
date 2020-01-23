@@ -227,7 +227,7 @@
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalOptions>/Qfast_transcendentals /Qpar /utf-8 /favor:AMD64 %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

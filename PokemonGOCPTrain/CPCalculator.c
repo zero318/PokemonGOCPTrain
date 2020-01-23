@@ -100,31 +100,34 @@ void main() {
 		}
 	}
 	PokemonInputData* PokemonData = SaferMalloc(PokemonInputData, PokemonData, MaxPokemon * sizeof(PokemonInputData))
-	//PokemonInputData* PokemonData = SaferCalloc(PokemonInputData, PokemonData, MaxPokemon, sizeof(PokemonInputData))
 	(void)fread(PokemonData, MaxPokemon, 6, PokemonStatsFile);
 	(void)fclose(PokemonStatsFile);
 	//CPMatchesData* CPMatches = SaferMalloc(CPMatchesData, CPMatches, MaxCP * sizeof(CPMatchesData))
 	CPMatchesData* CPMatches = SaferCalloc(CPMatchesData, CPMatches, MaxCP, sizeof(CPMatchesData))
-	PokemonOutputStruct TempOutputStruct;
-	//uint_fast16_t* CPList = (uint_fast16_t*)calloc(MaxPokemon * MaxLevel * IVCount * IVCount * IVCount, sizeof(uint_fast16_t));
 	uint16_t* CPList = SaferMalloc(uint16_t, CPList, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount * sizeof(uint16_t))
-	//uint16_t* CPList = SaferCalloc(uint16_t, CPList, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount, sizeof(uint16_t))
 	uint_fast32_t CPCount = 0;
+	PokemonOutputStruct TempOutputStruct;
+	TempOutputStruct.AttackIV = MaxIV;
+	TempOutputStruct.DefenseIV = MaxIV;
+	TempOutputStruct.HPIV = MaxIV;
 	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
 		CrappyPrintf("%u\r", Pokemon);
-		for (TempOutputStruct.Level = MinLevel; TempOutputStruct.Level <= MaxLevel; ++TempOutputStruct.Level) {
-			for (TempOutputStruct.AttackIV = MinIV; TempOutputStruct.AttackIV < MaxIV; ++TempOutputStruct.AttackIV) {
-				for (TempOutputStruct.DefenseIV = MinIV; TempOutputStruct.DefenseIV < MaxIV; ++TempOutputStruct.DefenseIV) {
-					for (TempOutputStruct.HPIV = MinIV; TempOutputStruct.HPIV < MaxIV; ++TempOutputStruct.HPIV) {
+		for (TempOutputStruct.Level = MinLevel - 1; TempOutputStruct.Level < MaxLevel; ++TempOutputStruct.Level) {
+			do {//Intentional overflow FTW I guess
+				++TempOutputStruct.AttackIV;
+				do {
+					++TempOutputStruct.DefenseIV;
+					do {
+						++TempOutputStruct.HPIV;
 #pragma warning(suppress:6011)
 #pragma warning(suppress:6385)
 #pragma warning(suppress:26451)
-						CPList[CPCount] = (uint16_t)(((PokemonData[Pokemon].BaseAttack + TempOutputStruct.AttackIV) * sqrt(PokemonData[Pokemon].BaseDefense + TempOutputStruct.DefenseIV) * sqrt(PokemonData[Pokemon].BaseHP + TempOutputStruct.HPIV) * CPMDoublesSquared[TempOutputStruct.Level - 1]) / 10) - 1;
+						CPList[CPCount] = (uint16_t)((((PokemonData[Pokemon].BaseAttack + TempOutputStruct.AttackIV) * sqrt(PokemonData[Pokemon].BaseDefense + TempOutputStruct.DefenseIV) * sqrt(PokemonData[Pokemon].BaseHP + TempOutputStruct.HPIV) * CPMDoublesSquared[TempOutputStruct.Level]) / 10) - 1);
 						++CPMatches[CPList[CPCount]].Count;
 						++CPCount;
-					}
-				}
-			}
+					} while (TempOutputStruct.HPIV < MaxIV);
+				} while (TempOutputStruct.DefenseIV < MaxIV);
+			} while (TempOutputStruct.AttackIV < MaxIV);
 		}
 	}
 	uint_fast16_t CP;
@@ -142,15 +145,21 @@ void main() {
 		TempOutputStruct.Dex = PokemonData[Pokemon].Dex;
 		TempOutputStruct.Form = PokemonData[Pokemon].Form;
 		for (TempOutputStruct.Level = MinLevel; TempOutputStruct.Level <= MaxLevel; ++TempOutputStruct.Level) {
-			for (TempOutputStruct.AttackIV = MinIV; TempOutputStruct.AttackIV < MaxIV; ++TempOutputStruct.AttackIV) {
-				for (TempOutputStruct.DefenseIV = MinIV; TempOutputStruct.DefenseIV < MaxIV; ++TempOutputStruct.DefenseIV) {
-					for (TempOutputStruct.HPIV = MinIV; TempOutputStruct.HPIV < MaxIV; ++TempOutputStruct.HPIV) {
+			do {
+				++TempOutputStruct.AttackIV;
+				do {
+					++TempOutputStruct.DefenseIV;
+					do {
+						++TempOutputStruct.HPIV;
 						CPMatches[CPList[CPCount]].ColumnData[CPMatches[CPList[CPCount]].Count].Struct = TempOutputStruct;
 						++CPMatches[CPList[CPCount]].Count;
 						++CPCount;
-					}
-				}
-			}
+					} while (TempOutputStruct.HPIV < MaxIV);
+					//TempOutputStruct.HPIV -= MaxIV;
+				} while (TempOutputStruct.DefenseIV < MaxIV);
+				//TempOutputStruct.DefenseIV -= MaxIV;
+			} while (TempOutputStruct.AttackIV < MaxIV);
+			//TempOutputStruct.AttackIV -= MaxIV;
 		}
 	}
 	free(PokemonData);
