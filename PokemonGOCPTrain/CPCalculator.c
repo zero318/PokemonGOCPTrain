@@ -16,7 +16,8 @@
 #define BinaryMode 0
 #define CSVMode 1
 #define ODSMode 2
-#define CalcMode CSVMode
+#define XLSXMode 3
+#define CalcMode XLSXMode
 
 #define PrintCrap
 
@@ -82,7 +83,7 @@ typedef struct {
 void main() {
 	HANDLE CalculatorProcess = GetCurrentProcess();
 	SetPriorityClass(CalculatorProcess, REALTIME_PRIORITY_CLASS);
-	CrappyPrintf("Pokemon GO CP Combination Calculator\nPokemon Count Pass 1:\n")
+	CrappyPrintf("Pokemon GO CP Combination Calculator\nLoading CPMs\n%u\n", MaxLevel - 1)
 	FILE *PokemonStatsFile = fopen(".\\PokemonStats.bin", "rb");
 	double CPMDoublesSquared[MaxLevel];
 	{//Lol, I don't need CPMFloats after this
@@ -90,6 +91,7 @@ void main() {
 		CPMFloat CPMFloats[MaxCPM];
 		(void)fread(&CPMFloats->InChars, MaxCPM, sizeof(float), PokemonStatsFile);
 		for (uint_fast8_t Level = 0; Level < MaxLevel; ++Level) {
+			CrappyPrintf("%u\r", Level);
 			if (Level & 1) {
 #pragma warning(suppress:26451)	//Can VS just shut up about my cast operation? It's supposed to be like that.
 				CPMDoublesSquared[Level] = sqrt(CPMFloats[CPM].single * CPMFloats[CPM].single - CPMFloats[CPM].single * CPMFloats[CPM].single / 2 + CPMFloats[CPM + 1].single * CPMFloats[CPM + 1].single / 2);
@@ -113,6 +115,7 @@ void main() {
 	TempOutputStruct.AttackIV = MaxIV;
 	TempOutputStruct.DefenseIV = MaxIV;
 	TempOutputStruct.HPIV = MaxIV;
+	CrappyPrintf("\nPokemon Count Pass 1:\n%u\n", MaxPokemon - 1)
 	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
 		CrappyPrintf("%u\r", Pokemon);
 		for (TempOutputStruct.Level = MinLevel - 1; TempOutputStruct.Level < MaxLevel; ++TempOutputStruct.Level) {
@@ -141,7 +144,7 @@ void main() {
 			CPMatches[CP].Count = 0;
 		}
 	}
-	CrappyPrintf("\nPokemon Count Pass 2:\n")
+	CrappyPrintf("\nPokemon Count Pass 2:\n%u\n", MaxPokemon - 1)
 	CPCount = 0;
 	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
 		CrappyPrintf("%u\r", Pokemon)
@@ -169,7 +172,7 @@ void main() {
 	}
 	free(PokemonData);
 	//free(CPList);
-	CrappyPrintf("\nCPCount:\n")
+	CrappyPrintf("\nCPCount:\n%u\n", CPCount - 1)
 #if CalcMode == BinaryMode
 	FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.bin", "w+b");
 	PokemonOutputUnion ColumnSpacer = { .Struct.HPIV = 0, .Struct.DefenseIV = 0, .Struct.AttackIV = 0, .Struct.Level = 0, .Struct.Form = 0, .Struct.Dex = 0 };
@@ -226,6 +229,48 @@ void main() {
 	}
 	free(CPMatches);
 	(void)fclose(PokemonOutputFile);
+#elif CalcMode == XLSXMode
+	FILE* SharedStrings = fopen("F:\\My Programming Stuff Expansion\\ExcelFileTest\\xl\\sharedStrings.xml", "w+");
+	(void)fprintf(SharedStrings, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"%u\" uniqueCount=\"%u\">", CPCount, CPCount);
+	for (CP = 0; CP < CPCount; ++CP) {
+		CrappyPrintf("%u\r", CP)
+		(void)fprintf(SharedStrings, "<si><t>%3u%o%2u%X%X%X</t></si>", CPList[CP].Struct.Dex, CPList[CP].Struct.Form, CPList[CP].Struct.Level, CPList[CP].Struct.AttackIV, CPList[CP].Struct.DefenseIV, CPList[CP].Struct.HPIV);
+	}
+	free(CPList);
+	(void)fprintf(SharedStrings, "</sst>");
+	(void)fclose(SharedStrings);
+	uint_fast32_t MaxCount = 0;
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		if (CPMatches[CP].Count) {
+			if (CPMatches[CP].Count > MaxCount) {
+				MaxCount = CPMatches[CP].Count;
+			}
+		}
+	}
+	char* EndMySuffering = SaferMalloc(char, EndMySuffering, MaxCP * 4)
+	FILE * AAAAAAAAH = fopen("FML.bin", "rb");
+	(void)fread(EndMySuffering, MaxCP * 4, sizeof(char), AAAAAAAAH);
+	(void)fclose(AAAAAAAAH);
+	CrappyPrintf("\nRowCount:\n%u\n", MaxCount - 1)
+	FILE* PokemonOutputFile = fopen("F:\\My Programming Stuff Expansion\\ExcelFileTest\\xl\\worksheets\\sheet1.xml", "w+");
+	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\"><dimension ref=\"A1:C4\"/><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\" x14ac:dyDescent=\"0.25\"/><sheetData>");
+	for (uint_fast32_t CountIndex = 0; CountIndex < 2; ++CountIndex) {
+		CrappyPrintf("%u\r", CountIndex)
+		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", CountIndex);
+		for (CP = MinCP; CP < MaxCP; ++CP) {
+			if (CountIndex < CPMatches[CP].Count) {
+				(void)fprintf(PokemonOutputFile, "<c r=\"%s%u1\" t=\"s\"><v>%u</v></c>", &EndMySuffering[CP * 4], CountIndex, CPMatches[CP].ColumnData[CountIndex].CPStringIndex);
+			}
+		}
+		(void)fprintf(PokemonOutputFile, "</row>");
+	}
+	free(EndMySuffering);
+	(void)fprintf(PokemonOutputFile, "</sheetData><pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>");
+	(void)fclose(PokemonOutputFile);
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		free(CPMatches[CP].ColumnData);
+	}
+	free(CPMatches);
 #elif CalcMode == ODSMode
 	FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.xml", "w+");
 	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<office:document-content xmlns:table=\"urn:oasis:names:tc:opendocument:xmlns:table:1.0\" xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" xmlns:text=\"urn:oasis:names:tc:opendocument:xmlns:text:1.0\" xmlns:style=\"urn:oasis:names:tc:opendocument:xmlns:style:1.0\" xmlns:draw=\"urn:oasis:names:tc:opendocument:xmlns:drawing:1.0\" xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:number=\"urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0\" xmlns:svg=\"urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0\" xmlns:of=\"urn:oasis:names:tc:opendocument:xmlns:of:1.2\" office:version=\"1.2\"><office:font-face-decls><style:font-face style:name=\"Calibri\" svg:font-family=\"Calibri\"/></office:font-face-decls><office:automatic-styles><style:style style:name=\"ce1\" style:family=\"table-cell\" style:parent-style-name=\"Default\" style:data-style-name=\"N0\"/><style:style style:name=\"co1\" style:family=\"table-column\"><style:table-column-properties fo:break-before=\"auto\" style:column-width=\"1.69333333333333cm\"/></style:style><style:style style:name=\"ro1\" style:family=\"table-row\"><style:table-row-properties style:row-height=\"15pt\" style:use-optimal-row-height=\"true\" fo:break-before=\"auto\"/></style:style><style:style style:name=\"ta1\" style:family=\"table\" style:master-page-name=\"mp1\"><style:table-properties table:display=\"true\" style:writing-mode=\"lr-tb\"/></style:style></office:automatic-styles><office:body><office:spreadsheet><table:calculation-settings table:case-sensitive=\"false\" table:search-criteria-must-apply-to-whole-cell=\"true\" table:use-wildcards=\"true\" table:use-regular-expressions=\"false\" table:automatic-find-labels=\"false\"/><table:table table:name=\"OutputSheet\" table:style-name=\"ta1\">");
