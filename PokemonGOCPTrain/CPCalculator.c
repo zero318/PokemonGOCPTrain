@@ -8,6 +8,7 @@
 #define MaxLevel 89
 #define MinIV 0
 #define MaxIV 15
+#define IVCount 16
 #define MinCP 1
 #define MaxCP 10403
 #define MinCPM 1
@@ -15,13 +16,35 @@
 #define BinaryMode 0
 #define CSVMode 1
 #define ODSMode 2
-#define Mode CSVMode
+#define CalcMode CSVMode
+
+#define PrintCrap
+
+#ifdef PrintCrap
+#define CrappyPrintf(StringyThingy, ...) (void)printf(StringyThingy, __VA_ARGS__);
+#else
+#define CrappyPrintf(StringyThingy, ...) /*yeet*/
+#endif
+
+#define SaferMalloc(Type, Pointer, Size) \
+(Type*)malloc(Size);\
+if (!Pointer) {\
+	printf("malloc of size %zu failed!\n", (size_t)Size);\
+	exit(1);\
+}
+#define SaferCalloc(Type, Pointer, Count, Size) \
+(Type*)calloc(Count, Size);\
+if (!Pointer) {\
+	printf("calloc of count %llu and size %zu failed!\n", (long long)Count, (size_t)Size);\
+	exit(1);\
+}
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
+#include <Windows.h>
 
 #pragma pack(push, 1)
 typedef struct PokemonInputStruct {
@@ -44,31 +67,29 @@ typedef struct PokemonOutputStruct {
 } PokemonOutputStruct;
 
 typedef union PokemonOutputUnion {
+	uint32_t CPStringIndex;
+	uint32_t CPValue;
 	struct PokemonOutputStruct Struct;
 	uint8_t OutChars[4];
 } PokemonOutputUnion;
 
-typedef struct PokemonOutputData {
-	union PokemonOutputUnion Data;
-	struct PokemonOutputData* NextData;
-} PokemonOutputData;
-
 typedef struct {
 	uint_fast32_t Count;
-	struct PokemonOutputData* StartOfColumn;
-	struct PokemonOutputData* CurrentData;
+	union PokemonOutputUnion* ColumnData;
 } CPMatchesData;
 #pragma pack(pop)
 
 void main() {
-	(void)printf("Pokemon GO CP Combination Calculator\nPokemon Count:\n");
+	HANDLE CalculatorProcess = GetCurrentProcess();
+	SetPriorityClass(CalculatorProcess, REALTIME_PRIORITY_CLASS);
+	CrappyPrintf("Pokemon GO CP Combination Calculator\nPokemon Count Pass 1:\n")
 	FILE *PokemonStatsFile = fopen(".\\PokemonStats.bin", "rb");
 	double CPMDoublesSquared[MaxLevel];
-	uint_fast8_t CPM = 0, Level = 0;
 	{//Lol, I don't need CPMFloats after this
+		uint_fast8_t CPM = 0;
 		CPMFloat CPMFloats[MaxCPM];
 		(void)fread(&CPMFloats->InChars, MaxCPM, sizeof(float), PokemonStatsFile);
-		for (Level; Level < MaxLevel; ++Level) {
+		for (uint_fast8_t Level = 0; Level < MaxLevel; ++Level) {
 			if (Level & 1) {
 #pragma warning(suppress:26451)	//Can VS just shut up about my cast operation? It's supposed to be like that.
 				CPMDoublesSquared[Level] = sqrt(CPMFloats[CPM].single * CPMFloats[CPM].single - CPMFloats[CPM].single * CPMFloats[CPM].single / 2 + CPMFloats[CPM + 1].single * CPMFloats[CPM + 1].single / 2);
@@ -80,194 +101,180 @@ void main() {
 			CPMDoublesSquared[Level] *= CPMDoublesSquared[Level];
 		}
 	}
-	PokemonInputData* PokemonData = (PokemonInputData*)calloc(MaxPokemon, sizeof(PokemonInputData));
-	if (!PokemonData) {
-		printf("calloc of count %ul and size %zu failed!\n", MaxPokemon, sizeof(PokemonInputData));
-		exit(1);
-	}
+	PokemonInputData* PokemonData = SaferMalloc(PokemonInputData, PokemonData, MaxPokemon * sizeof(PokemonInputData))
 	(void)fread(PokemonData, MaxPokemon, 6, PokemonStatsFile);
 	(void)fclose(PokemonStatsFile);
-	CPMatchesData* CPMatches = (CPMatchesData*)calloc(MaxCP, sizeof(CPMatchesData));
-	if (!CPMatches) {
-		printf("calloc of count %ul and size %zu failed!\n", MaxCP, sizeof(CPMatchesData));
-		exit(1);
-	}
-	CPMatchesData *CPMatchRef;
+	//CPMatchesData* CPMatches = SaferMalloc(CPMatchesData, CPMatches, MaxCP * sizeof(CPMatchesData))
+	CPMatchesData* CPMatches = SaferCalloc(CPMatchesData, CPMatches, MaxCP, sizeof(CPMatchesData))
+	PokemonOutputUnion* CPList = SaferMalloc(PokemonOutputUnion, CPList, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount * sizeof(PokemonOutputUnion))
+	//uint16_t* CPList = SaferMalloc(uint16_t, CPList, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount * sizeof(uint16_t))
+	uint_fast32_t CPCount = 0;
+	PokemonOutputStruct TempOutputStruct;
+	TempOutputStruct.AttackIV = MaxIV;
+	TempOutputStruct.DefenseIV = MaxIV;
+	TempOutputStruct.HPIV = MaxIV;
 	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
-		(void)printf("%u\r", Pokemon);
-		for (Level = MinLevel; Level <= MaxLevel; ++Level) {
-			for (uint_fast8_t AttackIV = MinIV; AttackIV < MaxIV; ++AttackIV) {
-				for (uint_fast8_t DefenseIV = MinIV; DefenseIV < MaxIV; ++DefenseIV) {
-					for (uint_fast8_t HPIV = MinIV; HPIV < MaxIV; ++HPIV) {
-#pragma warning(suppress:26451)
-						CPMatchRef = &CPMatches[(uint_fast16_t)(((PokemonData[Pokemon].BaseAttack + AttackIV) * sqrt(PokemonData[Pokemon].BaseDefense + DefenseIV) * sqrt(PokemonData[Pokemon].BaseHP + HPIV) * CPMDoublesSquared[Level - 1]) / 10) - 1];
-						++(CPMatchRef->Count);
-						if (CPMatchRef->CurrentData) {
-							CPMatchRef->CurrentData->NextData = (struct PokemonOutputData*)malloc(sizeof(struct PokemonOutputData));
-							if (!CPMatchRef->CurrentData->NextData) {//If null pointer
-								printf("malloc of size %zu failed!\n", sizeof(struct PokemonOutputData));
-								exit(1);
-							}
-							CPMatchRef->CurrentData = CPMatchRef->CurrentData->NextData;
-						}
-						else {
-							CPMatchRef->StartOfColumn = (struct PokemonOutputData*)malloc(sizeof(struct PokemonOutputData));
-							if (!CPMatchRef->StartOfColumn) {//If null pointer
-								printf("malloc of size %zu failed!\n", sizeof(struct PokemonOutputData));
-								exit(1);
-							}
-							CPMatchRef->CurrentData = CPMatchRef->StartOfColumn;
-						}
+		CrappyPrintf("%u\r", Pokemon);
+		for (TempOutputStruct.Level = MinLevel - 1; TempOutputStruct.Level < MaxLevel; ++TempOutputStruct.Level) {
+			do {//Intentional overflow FTW I guess
+				++TempOutputStruct.AttackIV;
+				do {
+					++TempOutputStruct.DefenseIV;
+					do {
+						++TempOutputStruct.HPIV;
 #pragma warning(suppress:6011)
-						CPMatchRef->CurrentData->Data.Struct.Dex = PokemonData[Pokemon].Dex;
-						CPMatchRef->CurrentData->Data.Struct.Form = PokemonData[Pokemon].Form;
-						CPMatchRef->CurrentData->Data.Struct.Level = Level;
-						CPMatchRef->CurrentData->Data.Struct.AttackIV = AttackIV;
-						CPMatchRef->CurrentData->Data.Struct.DefenseIV = DefenseIV;
-						CPMatchRef->CurrentData->Data.Struct.HPIV = HPIV;
-					}
-				}
-			}
+#pragma warning(suppress:6385)
+#pragma warning(suppress:26451)
+						CPList[CPCount].CPValue = (uint32_t)((((PokemonData[Pokemon].BaseAttack + TempOutputStruct.AttackIV) * sqrt(PokemonData[Pokemon].BaseDefense + TempOutputStruct.DefenseIV) * sqrt(PokemonData[Pokemon].BaseHP + TempOutputStruct.HPIV) * CPMDoublesSquared[TempOutputStruct.Level]) / 10) - 1);
+						++CPMatches[CPList[CPCount].CPValue].Count;
+						++CPCount;
+					} while (TempOutputStruct.HPIV < MaxIV);
+				} while (TempOutputStruct.DefenseIV < MaxIV);
+			} while (TempOutputStruct.AttackIV < MaxIV);
+		}
+	}
+	uint_fast16_t CP;
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		if (CPMatches[CP].Count) {
+			CPMatches[CP].ColumnData = SaferMalloc(PokemonOutputUnion, CPMatches[CP].ColumnData, CPMatches[CP].Count * sizeof(PokemonOutputUnion))
+			//CPMatches[CP].ColumnData = SaferCalloc(PokemonOutputUnion, CPMatches[CP].ColumnData, CPMatches[CP].Count, sizeof(PokemonOutputUnion))
+			CPMatches[CP].Count = 0;
+		}
+	}
+	CrappyPrintf("\nPokemon Count Pass 2:\n")
+	CPCount = 0;
+	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
+		CrappyPrintf("%u\r", Pokemon)
+		TempOutputStruct.Dex = PokemonData[Pokemon].Dex;
+		TempOutputStruct.Form = PokemonData[Pokemon].Form;
+		for (TempOutputStruct.Level = MinLevel; TempOutputStruct.Level <= MaxLevel; ++TempOutputStruct.Level) {
+			do {
+				++TempOutputStruct.AttackIV;
+				do {
+					++TempOutputStruct.DefenseIV;
+					do {
+						++TempOutputStruct.HPIV;
+						CPMatches[CPList[CPCount].CPValue].ColumnData[CPMatches[CPList[CPCount].CPValue].Count].CPStringIndex = CPCount;
+						//CPMatches[CPList[CPCount]].ColumnData[CPMatches[CPList[CPCount]].Count].Struct = TempOutputStruct;
+						++CPMatches[CPList[CPCount].CPValue].Count;
+						CPList[CPCount].Struct = TempOutputStruct;
+						++CPCount;
+					} while (TempOutputStruct.HPIV < MaxIV);
+					//TempOutputStruct.HPIV -= MaxIV;
+				} while (TempOutputStruct.DefenseIV < MaxIV);
+				//TempOutputStruct.DefenseIV -= MaxIV;
+			} while (TempOutputStruct.AttackIV < MaxIV);
+			//TempOutputStruct.AttackIV -= MaxIV;
 		}
 	}
 	free(PokemonData);
-	(void)printf("\nCPCount:\n");
-	uint_fast16_t CP;
-	if (Mode == BinaryMode) {
-		FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.bin", "w+b");
-		PokemonOutputUnion ColumnSpacer = { .Struct.HPIV = 0, .Struct.DefenseIV = 0, .Struct.AttackIV = 0, .Struct.Level = 0, .Struct.Form = 0, .Struct.Dex = 0 };
-		PokemonOutputData* OutputRef = NULL, * OutputRef2;
-		for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-			(void)printf("%u\r", CP);
-			if (CPMatches[CP].StartOfColumn) {
-				OutputRef = CPMatches[CP].StartOfColumn;
-				for (uint_fast32_t PokemonOutput = 0; PokemonOutput < CPMatches[CP].Count; ++PokemonOutput) {
+	//free(CPList);
+	CrappyPrintf("\nCPCount:\n")
+#if CalcMode == BinaryMode
+	FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.bin", "w+b");
+	PokemonOutputUnion ColumnSpacer = { .Struct.HPIV = 0, .Struct.DefenseIV = 0, .Struct.AttackIV = 0, .Struct.Level = 0, .Struct.Form = 0, .Struct.Dex = 0 };
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		CrappyPrintf("%u\r", CP)
+		if (CPMatches[CP].Count) {
+			for (uint_fast32_t PokemonOutput = 0; PokemonOutput < CPMatches[CP].Count; ++PokemonOutput) {
 #pragma warning(suppress:6001)
-					(void)fwrite(OutputRef->Data.OutChars, 1, 4, PokemonOutputFile);
-					OutputRef2 = OutputRef;
-					OutputRef = OutputRef->NextData;
-					free(OutputRef2);
-				}
-				(void)fwrite(ColumnSpacer.OutChars, 1, 4, PokemonOutputFile);
+				(void)fwrite(CPMatches[CP].ColumnData[PokemonOutput].OutChars, 1, 4, PokemonOutputFile);
 			}
+			free(CPMatches[CP].ColumnData);
+			(void)fwrite(ColumnSpacer.OutChars, 1, 4, PokemonOutputFile);
 		}
-		free(CPMatches);
-		(void)fclose(PokemonOutputFile);
 	}
-	else if (Mode == CSVMode) {
-		FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.csv", "w+");
-		PokemonOutputStruct** PokemonOutput = (PokemonOutputStruct**)calloc(MaxCP, sizeof(PokemonOutputStruct*));
-		if (!PokemonOutput) {
-			printf("calloc of count %ul and size %zu failed!\n", MaxCP, sizeof(PokemonOutputStruct*));
-			exit(1);
+	free(CPMatches);
+	(void)fclose(PokemonOutputFile);
+#elif CalcMode == CSVMode
+	FILE* SharedStrings = fopen("PokemonCPStrings.csv", "w+");
+	for (CP = 0; CP < CPCount; ++CP) {
+		//CrappyPrintf("%u\r", CP)
+		(void)fprintf(SharedStrings, "%3u%o%2u%X%X%X\n", CPList[CP].Struct.Dex, CPList[CP].Struct.Form, CPList[CP].Struct.Level, CPList[CP].Struct.AttackIV, CPList[CP].Struct.DefenseIV, CPList[CP].Struct.HPIV);
+	}
+	free(CPList);
+	(void)fclose(SharedStrings);
+	uint_fast32_t MaxCount = 0;
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		if (CPMatches[CP].Count) {
+			if (CPMatches[CP].Count > MaxCount) {
+				MaxCount = CPMatches[CP].Count;
+			}
 		}
-		PokemonOutputData* OutputRef = NULL, * OutputRef2;
-		uint_fast32_t MaxCount = 0;
-		for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-			(void)printf("%u\r", CP);
-			if (CPMatches[CP].Count) {
-				if (CPMatches[CP].Count > MaxCount) {
-					MaxCount = CPMatches[CP].Count;
-				}
+	}
+	CrappyPrintf("\nMaxCount: %u\nCount:\n", MaxCount)
+	FILE* PokemonOutputFile = fopen("PokemonCPOutput.csv", "w+");
+	for (uint_fast32_t CountIndex = 0; CountIndex < MaxCount; ++CountIndex) {
+		CrappyPrintf("%u\r", CountIndex)
+		if (CountIndex < CPMatches[0].Count) {
+			(void)fprintf(PokemonOutputFile, "%u", CPMatches[0].ColumnData[CountIndex].CPStringIndex);
+			//(void)fprintf(PokemonOutputFile, "%3u%o%2u%X%X%X", CPMatches[0].ColumnData[CountIndex].Struct.Dex, CPMatches[0].ColumnData[CountIndex].Struct.Form, CPMatches[0].ColumnData[CountIndex].Struct.Level, CPMatches[0].ColumnData[CountIndex].Struct.AttackIV, CPMatches[0].ColumnData[CountIndex].Struct.DefenseIV, CPMatches[0].ColumnData[CountIndex].Struct.HPIV);
+		}
+		for (CP = MinCP; CP < MaxCP; ++CP) {
+			if (CountIndex < CPMatches[CP].Count) {
+				(void)fprintf(PokemonOutputFile, ",%u", CPMatches[CP].ColumnData[CountIndex].CPStringIndex);
+				//(void)fprintf(PokemonOutputFile, ",%3u%o%2u%X%X%X", CPMatches[CP].ColumnData[CountIndex].Struct.Dex, CPMatches[CP].ColumnData[CountIndex].Struct.Form, CPMatches[CP].ColumnData[CountIndex].Struct.Level, CPMatches[CP].ColumnData[CountIndex].Struct.AttackIV, CPMatches[CP].ColumnData[CountIndex].Struct.DefenseIV, CPMatches[CP].ColumnData[CountIndex].Struct.HPIV);
+			}
+			else {
+				(void)fprintf(PokemonOutputFile, ",");
+			}
+		}
+		(void)fprintf(PokemonOutputFile, "\n");
+	}
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		free(CPMatches[CP].ColumnData);
+	}
+	free(CPMatches);
+	(void)fclose(PokemonOutputFile);
+#elif CalcMode == ODSMode
+	FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.xml", "w+");
+	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<office:document-content xmlns:table=\"urn:oasis:names:tc:opendocument:xmlns:table:1.0\" xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" xmlns:text=\"urn:oasis:names:tc:opendocument:xmlns:text:1.0\" xmlns:style=\"urn:oasis:names:tc:opendocument:xmlns:style:1.0\" xmlns:draw=\"urn:oasis:names:tc:opendocument:xmlns:drawing:1.0\" xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:number=\"urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0\" xmlns:svg=\"urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0\" xmlns:of=\"urn:oasis:names:tc:opendocument:xmlns:of:1.2\" office:version=\"1.2\"><office:font-face-decls><style:font-face style:name=\"Calibri\" svg:font-family=\"Calibri\"/></office:font-face-decls><office:automatic-styles><style:style style:name=\"ce1\" style:family=\"table-cell\" style:parent-style-name=\"Default\" style:data-style-name=\"N0\"/><style:style style:name=\"co1\" style:family=\"table-column\"><style:table-column-properties fo:break-before=\"auto\" style:column-width=\"1.69333333333333cm\"/></style:style><style:style style:name=\"ro1\" style:family=\"table-row\"><style:table-row-properties style:row-height=\"15pt\" style:use-optimal-row-height=\"true\" fo:break-before=\"auto\"/></style:style><style:style style:name=\"ta1\" style:family=\"table\" style:master-page-name=\"mp1\"><style:table-properties table:display=\"true\" style:writing-mode=\"lr-tb\"/></style:style></office:automatic-styles><office:body><office:spreadsheet><table:calculation-settings table:case-sensitive=\"false\" table:search-criteria-must-apply-to-whole-cell=\"true\" table:use-wildcards=\"true\" table:use-regular-expressions=\"false\" table:automatic-find-labels=\"false\"/><table:table table:name=\"OutputSheet\" table:style-name=\"ta1\">");
+	PokemonOutputStruct** PokemonOutput = SaferCalloc(PokemonOutputStruct*, PokemonOutput, MaxCP, sizeof(PokemonOutputStruct*))
+	PokemonOutputData* OutputRef = NULL, * OutputRef2;
+	uint_fast32_t MaxCount = 0;
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		CrappyPrintf("%u\r", CP)
+		if (CPMatches[CP].Count) {
+			if (CPMatches[CP].Count > MaxCount) {
+				MaxCount = CPMatches[CP].Count;
+			}
 #pragma warning(suppress:6011)
-				PokemonOutput[CP] = (PokemonOutputStruct*)calloc(CPMatches[CP].Count, sizeof(PokemonOutputStruct));
-				if (!PokemonOutput[CP]) {
-					printf("calloc of count %ul and size %zu failed!\n", CPMatches[CP].Count, sizeof(PokemonOutputStruct));
-					exit(1);
-				}
-				OutputRef = CPMatches[CP].StartOfColumn;
-				for (uint_fast32_t CountIndex = 0; CountIndex < CPMatches[CP].Count; ++CountIndex) {
+			PokemonOutput[CP] = SaferCalloc(PokemonOutputStruct, PokemonOutput[CP], CPMatches[CP].Count, sizeof(PokemonOutputStruct))
+			OutputRef = CPMatches[CP].StartOfColumn;
+			for (uint_fast32_t CountIndex = 0; CountIndex < CPMatches[CP].Count; ++CountIndex) {
 #pragma warning(suppress:6001)
-					PokemonOutput[CP][CountIndex] = OutputRef->Data.Struct;
-					OutputRef2 = OutputRef;
-					OutputRef = OutputRef->NextData;
-					free(OutputRef2);
-				}
+				PokemonOutput[CP][CountIndex] = OutputRef->Data.Struct;
+				OutputRef2 = OutputRef;
+				OutputRef = OutputRef->NextData;
+				free(OutputRef2);
 			}
 		}
-		(void)printf("\nMaxCount: %u\nCount:\n", MaxCount);
-		for (CP = MinCP; CP <= MaxCP; ++CP) {
-			(void)fprintf(PokemonOutputFile, "");
+	}
+	CrappyPrintf("\nMaxCount: %u\nCount:\n", MaxCount)
+	for (CP = MinCP; CP <= MaxCP; ++CP) {
+		(void)fprintf(PokemonOutputFile, "");
+	}
+	for (uint_fast32_t CountIndex = 0; CountIndex < MaxCount; ++CountIndex) {
+		CrappyPrintf("%u\r", CountIndex)
+		if (CountIndex < CPMatches[0].Count) {
+			(void)fprintf(PokemonOutputFile, "%3u%o%2u%X%X%X", PokemonOutput[0][CountIndex].Dex, PokemonOutput[0][CountIndex].Form, PokemonOutput[0][CountIndex].Level, PokemonOutput[0][CountIndex].AttackIV, PokemonOutput[0][CountIndex].DefenseIV, PokemonOutput[0][CountIndex].HPIV);
 		}
-		for (uint_fast32_t CountIndex = 0; CountIndex < MaxCount; ++CountIndex) {
-			(void)printf("%u\r", CountIndex);
-			if (CountIndex < CPMatches[0].Count) {
-				(void)fprintf(PokemonOutputFile, "%3u%o%2u%X%X%X", PokemonOutput[0][CountIndex].Dex, PokemonOutput[0][CountIndex].Form, PokemonOutput[0][CountIndex].Level, PokemonOutput[0][CountIndex].AttackIV, PokemonOutput[0][CountIndex].DefenseIV, PokemonOutput[0][CountIndex].HPIV);
+		for (CP = MinCP; CP < MaxCP; ++CP) {
+			if (CountIndex < CPMatches[CP].Count) {
+				(void)fprintf(PokemonOutputFile, ",%3u%o%2u%X%X%X", PokemonOutput[CP][CountIndex].Dex, PokemonOutput[CP][CountIndex].Form, PokemonOutput[CP][CountIndex].Level, PokemonOutput[CP][CountIndex].AttackIV, PokemonOutput[CP][CountIndex].DefenseIV, PokemonOutput[CP][CountIndex].HPIV);
 			}
-			for (CP = MinCP; CP < MaxCP; ++CP) {
-				if (CountIndex < CPMatches[CP].Count) {
-					(void)fprintf(PokemonOutputFile, ",%3u%o%2u%X%X%X", PokemonOutput[CP][CountIndex].Dex, PokemonOutput[CP][CountIndex].Form, PokemonOutput[CP][CountIndex].Level, PokemonOutput[CP][CountIndex].AttackIV, PokemonOutput[CP][CountIndex].DefenseIV, PokemonOutput[CP][CountIndex].HPIV);
-				}
-				else {
-					(void)fprintf(PokemonOutputFile, ",");
-				}
-			}
-			(void)fprintf(PokemonOutputFile, "\n");
-		}
-		free(CPMatches);
-		for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-			free(PokemonOutput[CP]);
-		}
-		free(PokemonOutput);
-		(void)fclose(PokemonOutputFile);
-	}/*
-	else if (Mode == ODSMode) {
-		FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.xml", "w+");
-		(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<office:document-content xmlns:table=\"urn:oasis:names:tc:opendocument:xmlns:table:1.0\" xmlns:office=\"urn:oasis:names:tc:opendocument:xmlns:office:1.0\" xmlns:text=\"urn:oasis:names:tc:opendocument:xmlns:text:1.0\" xmlns:style=\"urn:oasis:names:tc:opendocument:xmlns:style:1.0\" xmlns:draw=\"urn:oasis:names:tc:opendocument:xmlns:drawing:1.0\" xmlns:fo=\"urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:number=\"urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0\" xmlns:svg=\"urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0\" xmlns:of=\"urn:oasis:names:tc:opendocument:xmlns:of:1.2\" office:version=\"1.2\"><office:font-face-decls><style:font-face style:name=\"Calibri\" svg:font-family=\"Calibri\"/></office:font-face-decls><office:automatic-styles><style:style style:name=\"ce1\" style:family=\"table-cell\" style:parent-style-name=\"Default\" style:data-style-name=\"N0\"/><style:style style:name=\"co1\" style:family=\"table-column\"><style:table-column-properties fo:break-before=\"auto\" style:column-width=\"1.69333333333333cm\"/></style:style><style:style style:name=\"ro1\" style:family=\"table-row\"><style:table-row-properties style:row-height=\"15pt\" style:use-optimal-row-height=\"true\" fo:break-before=\"auto\"/></style:style><style:style style:name=\"ta1\" style:family=\"table\" style:master-page-name=\"mp1\"><style:table-properties table:display=\"true\" style:writing-mode=\"lr-tb\"/></style:style></office:automatic-styles><office:body><office:spreadsheet><table:calculation-settings table:case-sensitive=\"false\" table:search-criteria-must-apply-to-whole-cell=\"true\" table:use-wildcards=\"true\" table:use-regular-expressions=\"false\" table:automatic-find-labels=\"false\"/><table:table table:name=\"OutputSheet\" table:style-name=\"ta1\">");
-		PokemonOutputStruct** PokemonOutput = (PokemonOutputStruct**)calloc(MaxCP, sizeof(PokemonOutputStruct*));
-		if (!PokemonOutput) {
-			printf("calloc of count %ul and size %zu failed!\n", MaxCP, sizeof(PokemonOutputStruct*));
-			exit(1);
-		}
-		PokemonOutputData* OutputRef = NULL, * OutputRef2;
-		uint_fast32_t MaxCount = 0;
-		for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-			(void)printf("%u\r", CP);
-			if (CPMatches[CP].Count) {
-				if (CPMatches[CP].Count > MaxCount) {
-					MaxCount = CPMatches[CP].Count;
-				}
-#pragma warning(suppress:6011)
-				PokemonOutput[CP] = (PokemonOutputStruct*)calloc(CPMatches[CP].Count, sizeof(PokemonOutputStruct));
-				if (!PokemonOutput[CP]) {
-					printf("calloc of count %ul and size %zu failed!\n", CPMatches[CP].Count, sizeof(PokemonOutputStruct));
-					exit(1);
-				}
-				OutputRef = CPMatches[CP].StartOfColumn;
-				for (uint_fast32_t CountIndex = 0; CountIndex < CPMatches[CP].Count; ++CountIndex) {
-#pragma warning(suppress:6001)
-					PokemonOutput[CP][CountIndex] = OutputRef->Data.Struct;
-					OutputRef2 = OutputRef;
-					OutputRef = OutputRef->NextData;
-					free(OutputRef2);
-				}
+			else {
+				(void)fprintf(PokemonOutputFile, ",");
 			}
 		}
-		(void)printf("\nMaxCount: %u\nCount:\n", MaxCount);
-		for (CP = MinCP; CP <= MaxCP; ++CP) {
-			(void)fprintf(PokemonOutputFile, "");
-		}
-		for (uint_fast32_t CountIndex = 0; CountIndex < MaxCount; ++CountIndex) {
-			(void)printf("%u\r", CountIndex);
-			if (CountIndex < CPMatches[0].Count) {
-				(void)fprintf(PokemonOutputFile, "%3u%o%2u%X%X%X", PokemonOutput[0][CountIndex].Dex, PokemonOutput[0][CountIndex].Form, PokemonOutput[0][CountIndex].Level, PokemonOutput[0][CountIndex].AttackIV, PokemonOutput[0][CountIndex].DefenseIV, PokemonOutput[0][CountIndex].HPIV);
-			}
-			for (CP = MinCP; CP < MaxCP; ++CP) {
-				if (CountIndex < CPMatches[CP].Count) {
-					(void)fprintf(PokemonOutputFile, ",%3u%o%2u%X%X%X", PokemonOutput[CP][CountIndex].Dex, PokemonOutput[CP][CountIndex].Form, PokemonOutput[CP][CountIndex].Level, PokemonOutput[CP][CountIndex].AttackIV, PokemonOutput[CP][CountIndex].DefenseIV, PokemonOutput[CP][CountIndex].HPIV);
-				}
-				else {
-					(void)fprintf(PokemonOutputFile, ",");
-				}
-			}
-			(void)fprintf(PokemonOutputFile, "\n");
-		}
-		free(CPMatches);
-		for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-			free(PokemonOutput[CP]);
-		}
-		free(PokemonOutput);
-		(void)fclose(PokemonOutputFile);
-	}*/
+		(void)fprintf(PokemonOutputFile, "\n");
+	}
+	free(CPMatches);
+	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
+		free(PokemonOutput[CP]);
+	}
+	free(PokemonOutput);
+	(void)fclose(PokemonOutputFile);
+#endif
 	(void)printf("\nDone");
 }

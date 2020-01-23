@@ -10,6 +10,10 @@
 *.userosscache
 *.sln.docstates
 
+#yeet
+PokemonGOCPTrain/PokemonCPStrings.csv
+PokemonGOCPTrain/PokemonCPOutput.csv
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
