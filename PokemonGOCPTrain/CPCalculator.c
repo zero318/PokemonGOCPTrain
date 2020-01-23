@@ -254,7 +254,7 @@ void main() {
 	CrappyPrintf("\nRowCount:\n%u\n", MaxCount - 1)
 	FILE* PokemonOutputFile = fopen("F:\\My Programming Stuff Expansion\\ExcelFileTest\\xl\\worksheets\\sheet1.xml", "w+");
 	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\"><dimension ref=\"A1:C4\"/><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\" x14ac:dyDescent=\"0.25\"/><sheetData>");
-	for (uint_fast32_t CountIndex = 0; CountIndex < 2; ++CountIndex) {
+	for (uint_fast32_t CountIndex = 0; CountIndex < MaxCount; ++CountIndex) {
 		CrappyPrintf("%u\r", CountIndex)
 		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", CountIndex);
 		for (CP = MinCP; CP < MaxCP; ++CP) {
