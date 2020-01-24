@@ -72,12 +72,6 @@ typedef struct CPColumnMetadata {
 	uint_fast32_t Height;
 	CPComboStruct* Data;
 } CPColumnMetadata;
-
-typedef struct CPRowBounds {
-	uint16_t Min;
-	uint16_t Max;
-	uint16_t MinSolid;
-} CPRowBounds;
 #pragma pack(pop)
 
 void main() {
