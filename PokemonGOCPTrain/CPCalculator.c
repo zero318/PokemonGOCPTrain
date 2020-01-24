@@ -137,6 +137,9 @@ void main() {
 	uint_fast16_t CP;
 	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
 		if (CPColumn[CP].Height) {
+			//This uses the previously calculated column counts to
+			//allocate enough space for the output data, thus avoiding
+			//linked lists and the associated RAM usage of their pointers
 			CPColumn[CP].Data = SaferMalloc(CPComboStruct, CPColumn[CP].Data, CPColumn[CP].Height * sizeof(CPComboStruct));
 			CPColumn[CP].Height = 0;
 		}
