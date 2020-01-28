@@ -13,11 +13,6 @@
 #define MaxCP 10403
 #define MinCPM 1
 #define MaxCPM 45
-#define BinaryMode 0
-#define CSVMode 1
-#define ODSMode 2
-#define XLSXMode 3
-#define CalcMode XLSXMode
 
 #define PrintCrap
 
@@ -61,11 +56,12 @@ if (!Pointer) {\
 #pragma pack(push, 1)
 typedef struct PokemonStatsStruct {
 	uint32_t BaseHP : 10, BaseDefense : 10, BaseAttack : 10, : 0;
-	uint16_t Form : 3, Dex : 10, : 3;
+	//uint16_t Form : 3, Dex : 10, : 3;
 } PokemonStatsStruct;
 
 typedef struct CPComboStruct {
-	uint32_t HPIV : 4, DefenseIV : 4, AttackIV : 4, Level : 7, Form : 3, Dex : 10;
+	//uint32_t HPIV : 4, DefenseIV : 4, AttackIV : 4, Level : 7, Form : 3, Dex : 10;
+	uint32_t HPIV : 4, DefenseIV : 4, AttackIV : 4, Level : 7, Index : 10;
 } CPComboStruct;
 
 typedef struct CPColumnMetadata {
@@ -80,33 +76,33 @@ void main() {
 	SetPriorityClass(CalculatorProcess, REALTIME_PRIORITY_CLASS);
 	CrappyPrintf("Pokemon GO CP Combination Calculator\nLoading CPMs\n%u\n", MaxLevel - 1);
 	//Load CPM values from the data file and calculate the double values used later
-	FILE *PokemonStatsFile = fopen(".\\PokemonStats.bin", "rb");
-	double CPM[MaxLevel];
-	{
-		uint_fast8_t CPMIndex = 0;
-		float CPMFloats[MaxCPM];
-		(void)fread(&CPMFloats, MaxCPM, sizeof(float), PokemonStatsFile);
-		for (uint_fast8_t Level = 0; Level < MaxLevel; ++Level) {
-			CrappyPrintf("%u\r", Level);
-			if (Level & 1) {
+	FILE* CPMFile = fopen(".\\PokemonCPM.bin", "rb");
+	double* CPM = SaferMalloc(double, CPM, MaxLevel * sizeof(double));
+	float* CPMFloats = SaferMalloc(float, CPMFloats, MaxCPM * sizeof(float));
+	(void)fread(CPMFloats, MaxCPM, sizeof(float), CPMFile);
+	uint_fast8_t CPMIndex = 0;
+	for (uint_fast8_t Level = 0; Level < MaxLevel; ++Level) {
+		CrappyPrintf("%u\r", Level);
+		if (Level & 1) {
 #pragma warning(suppress:26451)
-				CPM[Level] = sqrt(CPMFloats[CPMIndex] * CPMFloats[CPMIndex] - CPMFloats[CPMIndex] * CPMFloats[CPMIndex] / 2 + CPMFloats[CPMIndex + 1] * CPMFloats[CPMIndex + 1] / 2);
-				++CPMIndex;
-			}
-			else {
-				CPM[Level] = (double)CPMFloats[CPMIndex];
-			}
-			//Square all the CPM values to make later calculations easier
-			CPM[Level] *= CPM[Level];
+			CPM[Level] = sqrt(CPMFloats[CPMIndex] * CPMFloats[CPMIndex] - CPMFloats[CPMIndex] * CPMFloats[CPMIndex] / 2 + CPMFloats[CPMIndex + 1] * CPMFloats[CPMIndex + 1] / 2);
+			++CPMIndex;
 		}
+		else {
+			CPM[Level] = (double)CPMFloats[CPMIndex];
+		}
+		//Square all the CPM values to make later calculations easier
+		CPM[Level] *= CPM[Level];
 	}
+	(void)fclose(CPMFile);
+	free(CPMFloats);
 	//Load the pokemon stats from a file
+	FILE* StatsFile = fopen(".\\PokemonStats2.bin", "rb");
 	PokemonStatsStruct* PokemonStats = SaferMalloc(PokemonStatsStruct, PokemonStats, MaxPokemon * sizeof(PokemonStatsStruct));
-	(void)fread(PokemonStats, MaxPokemon, 6, PokemonStatsFile);
-	(void)fclose(PokemonStatsFile);
+	(void)fread(PokemonStats, sizeof(PokemonStatsStruct), MaxPokemon, StatsFile);
+	(void)fclose(StatsFile);
 	//This line needs to be calloc instead of malloc to initialize Height to 0 without looping the array
 	CPColumnMetadata* CPColumn = SaferCalloc(CPColumnMetadata, CPColumn, MaxCP, sizeof(CPColumnMetadata));
-	//PokemonOutputUnion* CachedCPs = SaferMalloc(PokemonOutputUnion, CachedCPs, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount * sizeof(PokemonOutputUnion));
 	uint16_t* CachedCPs = SaferMalloc(uint16_t, CachedCPs, MaxPokemon * MaxLevel * IVCount * IVCount * IVCount * sizeof(uint16_t));
 	uint_fast32_t CPIndex = 0;
 	//This struct is used for holding many temporary values
@@ -134,6 +130,7 @@ void main() {
 			} while (Combo.AttackIV++ < MaxIV);
 		}
 	}
+	free(PokemonStats);
 	uint_fast16_t CP;
 	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
 		if (CPColumn[CP].Height) {
@@ -146,10 +143,10 @@ void main() {
 	}
 	CrappyPrintf("\nPokemon Count Pass 2:\n%u\n", MaxPokemon - 1);
 	CPIndex = 0;
-	for (uint_fast16_t Pokemon = 0; Pokemon < MaxPokemon; ++Pokemon) {
-		CrappyPrintf("%u\r", Pokemon);
-		Combo.Dex = PokemonStats[Pokemon].Dex;
-		Combo.Form = PokemonStats[Pokemon].Form;
+	for (Combo.Index = 0; Combo.Index < MaxPokemon; ++Combo.Index) {
+		CrappyPrintf("%u\r", Combo.Index);
+		//Combo.Dex = PokemonStats[Pokemon].Dex;
+		//Combo.Form = PokemonStats[Pokemon].Form;
 		for (Combo.Level = MinLevel; Combo.Level <= MaxLevel; ++Combo.Level) {
 			do {
 				do {
@@ -158,87 +155,14 @@ void main() {
 						//as the previous loop, so the CP values can be reused instead of recalculated
 						CPColumn[CachedCPs[CPIndex]].Data[CPColumn[CachedCPs[CPIndex]].Height] = Combo;
 						++CPColumn[CachedCPs[CPIndex]].Height;
-						//CPColumn[CachedCPs[CPIndex].CPValue].Data[CPColumn[CachedCPs[CPIndex].CPValue].Height].CPStringIndex = CPIndex;
-						//CachedCPs[CPIndex].Struct = Combo;
 						++CPIndex;
 					} while (Combo.HPIV++ < MaxIV);
 				} while (Combo.DefenseIV++ < MaxIV);
 			} while (Combo.AttackIV++ < MaxIV);
 		}
 	}
-	free(PokemonStats);
 	free(CachedCPs);
 	//CrappyPrintf("\nCP Count:\n%u\n", CPIndex - 1);
-#if CalcMode == BinaryMode
-	FILE* PokemonOutputFile = fopen(".\\PokemonCPOutput.bin", "w+b");
-	CPComboStruct ColumnSpacer = { .HPIV = 0, .DefenseIV = 0, .AttackIV = 0, .Level = 0, .Form = 0, .Dex = 0 };
-	//PokemonOutputUnion ColumnSpacer = { .Struct.HPIV = 0, .Struct.DefenseIV = 0, .Struct.AttackIV = 0, .Struct.Level = 0, .Struct.Form = 0, .Struct.Dex = 0 };
-	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-		CrappyPrintf("%u\r", CP);
-		if (CPColumn[CP].Height) {
-			for (uint_fast32_t PokemonOutput = 0; PokemonOutput < CPColumn[CP].Height; ++PokemonOutput) {
-#pragma warning(suppress:6001)
-				(void)fwrite(CPColumn[CP].Data[PokemonOutput], 1, 4, PokemonOutputFile);
-				//(void)fwrite(CPColumn[CP].ColumnData[PokemonOutput].OutChars, 1, 4, PokemonOutputFile);
-			}
-			free(CPColumn[CP].Data);
-			(void)fwrite(ColumnSpacer, 1, 4, PokemonOutputFile);
-			//free(CPColumn[CP].ColumnData);
-			//(void)fwrite(ColumnSpacer.OutChars, 1, 4, PokemonOutputFile);
-		}
-	}
-	free(CPColumn);
-	(void)fclose(PokemonOutputFile);
-#elif CalcMode == CSVMode
-	FILE* SharedStrings = fopen("PokemonCPStrings.csv", "w+");
-	for (CP = 0; CP < CPIndex; ++CP) {
-		//CrappyPrintf("%u\r", CP);
-		(void)fprintf(SharedStrings, "%3u%o%2u%X%X%X\n", CachedCPs[CP].Struct.Dex, CachedCPs[CP].Struct.Form, CachedCPs[CP].Struct.Level, CachedCPs[CP].Struct.AttackIV, CachedCPs[CP].Struct.DefenseIV, CachedCPs[CP].Struct.HPIV);
-	}
-	free(CachedCPs);
-	(void)fclose(SharedStrings);
-	uint_fast32_t MaxRow = 0;
-	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-		if (CPColumn[CP].Height) {
-			if (CPColumn[CP].Height > MaxRow) {
-				MaxRow = CPColumn[CP].Height;
-			}
-		}
-	}
-	CrappyPrintf("\nMaxCount: %u\nCount:\n", MaxRow);
-	FILE* PokemonOutputFile = fopen("PokemonCPOutput.csv", "w+");
-	for (uint_fast32_t Row = 0; Row < MaxRow; ++Row) {
-		CrappyPrintf("%u\r", Row);
-		if (Row < CPColumn[0].Height) {
-			(void)fprintf(PokemonOutputFile, "%u", CPColumn[0].ColumnData[Row].CPStringIndex);
-			//(void)fprintf(PokemonOutputFile, "%3u%o%2u%X%X%X", CPColumn[0].ColumnData[Row].Struct.Dex, CPColumn[0].ColumnData[Row].Struct.Form, CPColumn[0].ColumnData[Row].Struct.Level, CPColumn[0].ColumnData[Row].Struct.AttackIV, CPColumn[0].ColumnData[Row].Struct.DefenseIV, CPColumn[0].ColumnData[Row].Struct.HPIV);
-		}
-		for (CP = MinCP; CP < MaxCP; ++CP) {
-			if (Row < CPColumn[CP].Height) {
-				(void)fprintf(PokemonOutputFile, ",%u", CPColumn[CP].ColumnData[Row].CPStringIndex);
-				//(void)fprintf(PokemonOutputFile, ",%3u%o%2u%X%X%X", CPColumn[CP].ColumnData[Row].Struct.Dex, CPColumn[CP].ColumnData[Row].Struct.Form, CPColumn[CP].ColumnData[Row].Struct.Level, CPColumn[CP].ColumnData[Row].Struct.AttackIV, CPColumn[CP].ColumnData[Row].Struct.DefenseIV, CPColumn[CP].ColumnData[Row].Struct.HPIV);
-			}
-			else {
-				(void)fprintf(PokemonOutputFile, ",");
-			}
-		}
-		(void)fprintf(PokemonOutputFile, "\n");
-	}
-	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
-		free(CPColumn[CP].ColumnData);
-	}
-	free(CPColumn);
-	(void)fclose(PokemonOutputFile);
-#elif CalcMode == XLSXMode
-	/*FILE* SharedStrings = fopen("F:\\My Programming Stuff Expansion\\ExcelFileTest\\xl\\sharedStrings.xml", "w+");
-	(void)fprintf(SharedStrings, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"%u\" uniqueCount=\"%u\">", CPIndex, CPIndex);
-	for (CP = 0; CP < CPIndex; ++CP) {
-		CrappyPrintf("%u\r", CP)
-		(void)fprintf(SharedStrings, "<si><t>%3u%o%2u%X%X%X</t></si>", CachedCPs[CP].Struct.Dex, CachedCPs[CP].Struct.Form, CachedCPs[CP].Struct.Level, CachedCPs[CP].Struct.AttackIV, CachedCPs[CP].Struct.DefenseIV, CachedCPs[CP].Struct.HPIV);
-	}
-	free(CachedCPs);
-	(void)fprintf(SharedStrings, "</sst>");
-	(void)fclose(SharedStrings);*/
 	uint_fast32_t MaxRow = 0;
 	//Calculate the maximum row the data can go down to
 	for (CP = MinCP - 1; CP < MaxCP; ++CP) {
@@ -266,7 +190,7 @@ void main() {
 	//Because screw trying to actually calcuate those dang letters on the fly
 	//All indices are multiplied by 4 to account for max string length
 	char* EndMySuffering = SaferMalloc(char, EndMySuffering, MaxCP * 4);
-	FILE * AAAAAAAAH = fopen("FML.bin", "rb");
+	FILE* AAAAAAAAH = fopen("FML.bin", "rb");
 	(void)fread(EndMySuffering, MaxCP * 4, sizeof(char), AAAAAAAAH);
 	(void)fclose(AAAAAAAAH);
 	//Start printing the actual XML
@@ -281,12 +205,12 @@ void main() {
 		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", Row + 1);
 		CP = MinCP - 1;
 		do {//...write cell data for that row...
-			(void)fprintf(PokemonOutputFile, "<c><v>%u%u%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Dex, CPColumn[CP].Data[Row].Form, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+			(void)fprintf(PokemonOutputFile, "<c s=\"%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			++CP;
 		} while (Row < CPColumn[CP].Height);//..until there's a gap in that data.
 		while (CP <= CPRowMax[Row]) {//While there's still data in the row...
 			if (Row < CPColumn[CP].Height) {//...print cell data for the columns that aren't blank.
-				(void)fprintf(PokemonOutputFile, "<c r=\"%s%u\"><v>%u%u%02u%02u%02u%02u</v></c>", &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Dex, CPColumn[CP].Data[Row].Form, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+				(void)fprintf(PokemonOutputFile, "<c s=\"%u\" r=\"%s%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			}
 			++CP;
 		}
@@ -304,27 +228,13 @@ void main() {
 		CP = CPLeft;
 		while (CP <= CPRowMax[Row]) {//Starting from the left bound...
 			if (Row < CPColumn[CP].Height) {//...print cell data for the columns that aren't blank.
-				(void)fprintf(PokemonOutputFile, "<c r=\"%s%u\"><v>%u%u%02u%02u%02u%02u</v></c>", &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Dex, CPColumn[CP].Data[Row].Form, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+				(void)fprintf(PokemonOutputFile, "<c s=\"%u\" r=\"%s%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			}
 			++CP;
 		}
 		++Row;
 		(void)fprintf(PokemonOutputFile, "</row>");
 	}
-	//for (Row = 0; Row < MaxRow; ++Row) {
-	//	CrappyPrintf("%u\r", Row);
-	//	(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", Row);
-	//	//Use the bounding data to only loop where the data is
-	//	for (CP = CPBounds[Row].Min; CP <= CPBounds[Row].Max; ++CP) {
-	//	//for (CP = MinCP; CP < MaxCP; ++CP) {
-	//		if (Row < CPColumn[CP].Height) {
-	//			(void)fprintf(PokemonOutputFile, "<c r=\"%s%u\"><v>%03u%u%02u%02u%02u%02u</v></c>", &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Dex, CPColumn[CP].Data[Row].Form, CPColumn[CP].Data[Row].Level, CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
-	//			//(void)fprintf(PokemonOutputFile, "<c r=\"%s%u1\" t=\"s\"><v>%u</v></c>", &EndMySuffering[CP * 4], Row, CPColumn[CP].ColumnData[Row].CPStringIndex);
-	//		}
-	//	}
-	//	(void)fprintf(PokemonOutputFile, "</row>");
-	//}
-	//Get rid of that cancerous list of column strings already
 	free(EndMySuffering);
 	free(CPRowMax);
 	//Print the XML footer
@@ -334,6 +244,5 @@ void main() {
 		free(CPColumn[CP].Data);
 	}
 	free(CPColumn);
-#endif
 	CrappyPrintf("\nDone");
 }
