@@ -258,13 +258,13 @@
     <ClCompile Include="CPCalculator.c" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="PokemonStats.bin">
-      <DeploymentContent>true</DeploymentContent>
-      <FileType>Document</FileType>
-    </CopyFileToFolders>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="FML.bin">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="PokemonCPM.bin">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
+    <None Include="PokemonStats2.bin">
       <DeploymentContent>true</DeploymentContent>
     </None>
   </ItemGroup>

@@ -20,12 +20,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="PokemonStats.bin">
-      <Filter>Resource Files</Filter>
-    </CopyFileToFolders>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="FML.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="PokemonCPM.bin">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="PokemonStats2.bin">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
