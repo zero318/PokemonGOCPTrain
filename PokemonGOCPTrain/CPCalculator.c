@@ -143,7 +143,7 @@ void main() {
 	}
 	CrappyPrintf("\nPokemon Count Pass 2:\n%u\n", MaxPokemon - 1);
 	CPIndex = 0;
-	for (Combo.Index = 0; Combo.Index < MaxPokemon; ++Combo.Index) {
+	for (Combo.Index = MinPokemon; Combo.Index <= MaxPokemon; ++Combo.Index) {
 		CrappyPrintf("%u\r", Combo.Index);
 		//Combo.Dex = PokemonStats[Pokemon].Dex;
 		//Combo.Form = PokemonStats[Pokemon].Form;
@@ -195,23 +195,26 @@ void main() {
 	(void)fclose(AAAAAAAAH);
 	//Start printing the actual XML
 	FILE* PokemonOutputFile = fopen("F:\\My Programming Stuff Expansion\\ExcelFileTest\\xl\\worksheets\\sheet1.xml", "w+");
-	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\"><dimension ref=\"A1:%s%u\"/><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\" x14ac:dyDescent=\"0.25\"/><sheetData>", &EndMySuffering[MaxCP * 4 - 4], MaxRow);
+	(void)fprintf(PokemonOutputFile, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\"><dimension ref=\"A1:%s%u\"/><sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\" x14ac:dyDescent=\"0.25\"/><sheetData>", &EndMySuffering[MaxCP * 4 - 4], MaxRow);//<cols><col min=\"%u\" max=\"%u\" bestFit=\"1\" customWidth=\"1\"/></cols>
 	Row = 0;
-	//uint_fast8_t TrueLevel[89] =;
+	uint_fast8_t TrueLevel[90] = { 0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200, 205, 210, 215, 220, 225, 230, 235, 240, 245, 250, 255, 260, 265, 270, 275, 280, 285, 290, 295, 300, 305, 310, 315, 320, 325, 330, 335, 340, 345, 350, 355, 360, 365, 370, 375, 380, 385, 390, 395, 400, 405, 410, 415, 420, 425, 430, 435, 440, 445, 450 };
 	CrappyPrintf("\nRow Parsing 2:\n%u\n", CPColumn[0].Height - 1);
 	//Rows with data in column 0 can store their data without
 	//r="A1" type tags until the first gap
+	//MaxRow = 2;
+	//CP = MinCP - 1;
+	//while (Row < 2) {//While a row has data in column 0...
 	while (Row < CPColumn[0].Height) {//While a row has data in column 0...
 		CrappyPrintf("%u\r", Row);
-		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", Row + 1);
+		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"%u:%u\">", Row + 1, 1, CPRowMax[Row] + 1);
 		CP = MinCP - 1;
 		do {//...write cell data for that row...
-			(void)fprintf(PokemonOutputFile, "<c s=\"%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, 10 * (uint_fast8_t)((CPColumn[CP].Data[Row].Level + 1) / 2), CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+			(void)fprintf(PokemonOutputFile, "<c s=\"%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, TrueLevel[CPColumn[CP].Data[Row].Level], CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			++CP;
 		} while (Row < CPColumn[CP].Height);//..until there's a gap in that data.
 		while (CP <= CPRowMax[Row]) {//While there's still data in the row...
 			if (Row < CPColumn[CP].Height) {//...print cell data for the columns that aren't blank.
-				(void)fprintf(PokemonOutputFile, "<c s=\"%u\" r=\"%s%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, &EndMySuffering[CP * 4], Row + 1, 10 * (uint_fast8_t)((CPColumn[CP].Data[Row].Level + 1) / 2), CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+				(void)fprintf(PokemonOutputFile, "<c r=\"%s%u\" s=\"%u\"><v>%02u%02u%02u%02u</v></c>", &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Index, TrueLevel[CPColumn[CP].Data[Row].Level], CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			}
 			++CP;
 		}
@@ -222,14 +225,14 @@ void main() {
 	CrappyPrintf("\nRow Parsing 3:\n%u\n", MaxRow - 1);
 	while (Row < MaxRow) {//While there are still more rows...
 		CrappyPrintf("%u\r", Row);
-		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"1:3\" x14ac:dyDescent=\"0.25\">", Row + 1);
 		while (Row > CPColumn[CPLeft].Height) {//Update the left bound of the data
 			++CPLeft;
 		}
 		CP = CPLeft;
+		(void)fprintf(PokemonOutputFile, "<row r=\"%u\" spans=\"%u:%u\">", Row + 1, CPLeft + 1, CPRowMax[Row] + 1);
 		while (CP <= CPRowMax[Row]) {//Starting from the left bound...
 			if (Row < CPColumn[CP].Height) {//...print cell data for the columns that aren't blank.
-				(void)fprintf(PokemonOutputFile, "<c s=\"%u\" r=\"%s%u\"><v>%02u%02u%02u%02u</v></c>", CPColumn[CP].Data[Row].Index, &EndMySuffering[CP * 4], Row + 1, 10 * (uint_fast8_t)((CPColumn[CP].Data[Row].Level + 1) / 2), CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
+				(void)fprintf(PokemonOutputFile, "<c r=\"%s%u\" s=\"%u\"><v>%02u%02u%02u%02u</v></c>", &EndMySuffering[CP * 4], Row + 1, CPColumn[CP].Data[Row].Index, TrueLevel[CPColumn[CP].Data[Row].Level], CPColumn[CP].Data[Row].AttackIV, CPColumn[CP].Data[Row].DefenseIV, CPColumn[CP].Data[Row].HPIV);
 			}
 			++CP;
 		}
