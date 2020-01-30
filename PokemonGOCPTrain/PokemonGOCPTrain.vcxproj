@@ -263,6 +263,12 @@
   <ItemGroup>
     <ResourceCompile Include="PokemonGOCPTrain.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="FML.bin" />
+    <None Include="PokemonCPM.bin" />
+    <None Include="PokemonNames.bin" />
+    <None Include="PokemonStats2.bin" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
