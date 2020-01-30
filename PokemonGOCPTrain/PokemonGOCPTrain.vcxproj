@@ -258,15 +258,10 @@
     <ClCompile Include="CPCalculator.c" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="FML.bin">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="PokemonCPM.bin">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
-    <None Include="PokemonStats2.bin">
-      <DeploymentContent>true</DeploymentContent>
-    </None>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PokemonGOCPTrain.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
