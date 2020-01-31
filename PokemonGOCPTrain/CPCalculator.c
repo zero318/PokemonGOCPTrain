@@ -320,7 +320,6 @@ int main(int argc, char* argv[]) {
 		CPM[Level] *= CPM[Level];
 	}
 	CPComboCount* CPColumnHeight = SaferCalloc(CPComboCount, CPColumnHeight, ExcelMaxColumns);
-	//CPValue* CachedCPs = SaferMalloc(CPValue, CachedCPs, PokemonCount * LevelCount * IVCount * IVCount * IVCount);
 	CPValue* CachedCPs = SaferMalloc(CPValue, CachedCPs, PokemonCount * LevelCount * IVCount * IVCount * IVCount);
 	CPComboCount CPIndex = 0;
 	//This struct is used for holding many temporary values
@@ -334,24 +333,17 @@ int main(int argc, char* argv[]) {
 	for (Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
 		VerboseProgress(Pokemon);
 		PokemonStatsStruct PokemonStats2 = PokemonStats[Pokemon];
-		for (IVIndexer AttackIV = MinAttack; AttackIV <= MaxAttack; ++AttackIV) {
-			AttackStats[AttackIV] = PokemonStats2.BaseAttack + AttackIV;
+		for (IVIndexer Attack = MinAttack; Attack <= MaxAttack; ++Attack) {
+			AttackStats[Attack] = PokemonStats2.BaseAttack + Attack;
 		}
-		for (IVIndexer DefenseIV = MinDefense; DefenseIV <= MaxDefense; ++DefenseIV) {
+		for (IVIndexer Defense = MinDefense; Defense <= MaxDefense; ++Defense) {
 #pragma warning(suppress:26451)
-			DefenseStats[DefenseIV] = sqrt(PokemonStats2.BaseDefense + DefenseIV);
+			DefenseStats[Defense] = sqrt(PokemonStats2.BaseDefense + Defense);
 		}
-		for (IVIndexer HPIV = MinHP; HPIV <= MaxHP; ++HPIV) {
+		for (IVIndexer HP = MinHP; HP <= MaxHP; ++HP) {
 #pragma warning(suppress:26451)
-			HPStats[HPIV] = sqrt(PokemonStats2.BaseHP + HPIV);
+			HPStats[HP] = sqrt(PokemonStats2.BaseHP + HP);
 		}
-//		for (IVIndexer IV = MinIV; IV <= MaxIV; ++IV) {
-//			AttackStats[IV] = PokemonStats2.BaseAttack + IV;
-//#pragma warning(suppress:26451)
-//			DefenseStats[IV] = sqrt(PokemonStats2.BaseDefense + IV);
-//#pragma warning(suppress:26451)
-//			HPStats[IV] = sqrt(PokemonStats2.BaseHP + IV);
-//		}
 		for (LevelIndexer Level = MinLevel; Level <= MaxLevel; ++Level) {
 			for (IVIndexer Attack = MinAttack; Attack <= MaxAttack; ++Attack) {
 				for (IVIndexer Defense = MinDefense; Defense <= MaxDefense; ++Defense) {
