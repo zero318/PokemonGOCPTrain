@@ -498,7 +498,7 @@ int main(int argc, char* argv[]) {
 			TempStruct = CPColumn[SpecificCP][Row];
 			TempPercent = ((double)TempStruct.AttackIV + (double)TempStruct.DefenseIV + (double)TempStruct.HPIV) / (double)(MaxIV + MaxIV + MaxIV);
 			if (TempPercent >= MinPercentIV && TempPercent <= MaxPercentIV) {
-				(void)fprintf(GenericFile, "%23s/%4.1f/%02u/%02u/%02u\n", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
+				(void)fprintf(GenericFile, "%-23s/%4.1f/%02u/%02u/%02u\r\n", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
 			}
 		}
 		(void)fclose(GenericFile);

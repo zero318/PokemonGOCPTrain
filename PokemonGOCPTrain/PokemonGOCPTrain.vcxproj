@@ -227,7 +227,7 @@
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalOptions>/Qfast_transcendentals /Qpar /utf-8 /favor:AMD64 %(AdditionalOptions)</AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -241,7 +241,6 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalOptions>/Qfast_transcendentals /Qpar /utf-8 /favor:INTEL64 %(AdditionalOptions)</AdditionalOptions>
