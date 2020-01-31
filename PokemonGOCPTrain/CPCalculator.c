@@ -63,16 +63,16 @@ if (VerboseMode) {\
 //structure without braces, otherwise the compiler gets AIDS
 #define SaferMalloc(Type, Pointer, Count) \
 (Type*)malloc((size_t)Count * sizeof(Type));\
-if (!Pointer) {\
+DoSomething(if (!Pointer) {\
 	printf("malloc of size %zu failed!\n", (size_t)Count * sizeof(Type));\
 	exit(EXIT_FAILURE);\
-}
+})
 #define SaferCalloc(Type, Pointer, Count) \
 (Type*)calloc(Count, sizeof(Type));\
-if (!Pointer) {\
-	printf("calloc of count %llu and size %zu failed!\n", (long long)Count, (size_t)sizeof(Type));\
+DoSomething(if (!Pointer) {\
+	printf("calloc of count %llu and size %zu failed!\n", (size_t)Count, (size_t)sizeof(Type));\
 	exit(EXIT_FAILURE);\
-}
+})
 
 #define MinRangeCheck(Value, AbsValue, TypeChar) DoSomething(\
 if (Value < AbsValue) {\
@@ -409,10 +409,10 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	free(CachedCPs);
-	//Load a file with a bunch of strings representing Excel's column headers
-	//Because screw trying to actually calcuate those dang letters on the fly
-	//All indices are multiplied by 4 to account for max string length
 	if (OutputMode == 0) {
+		//Load a file with a bunch of strings representing Excel's column headers
+		//Because screw trying to actually calcuate those dang letters on the fly
+		//All indices are multiplied by 4 to account for max string length
 		char* EndMySuffering2 = (char*)SaferResourceLoad(FMLFile);
 		char* EndMySuffering = SaferMalloc(char, EndMySuffering, (size_t)CPCount * 4);
 		memcpy(EndMySuffering, EndMySuffering2, (size_t)CPCount * 4);
