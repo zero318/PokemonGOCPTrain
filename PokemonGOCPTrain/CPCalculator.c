@@ -475,11 +475,14 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	free(CachedCPs);
+	//XLSX mode
 	if (OutputMode == 0) {
 		//Load a file with a bunch of strings representing Excel's column headers
 		//Because screw trying to actually calcuate those dang letters on the fly
 		//All indices are multiplied by 4 to account for max string length
 		char* EndMySuffering2 = (char*)SaferResourceLoad(FMLFile);
+		//This is probably just me being superstitious, but I feel like it's faster to read from an a malloc array than an
+		//embedded file, so copy all the data to an array and then just read from that instead
 		char* EndMySuffering = SaferMalloc(char, EndMySuffering, (size_t)CPCount * 4);
 		memcpy(EndMySuffering, EndMySuffering2, (size_t)CPCount * 4);
 		//Start printing the actual XML
@@ -544,6 +547,7 @@ int main(int argc, char* argv[]) {
 		(void)fputs("</sheetData><pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>", GenericFile);
 		(void)fclose(GenericFile);
 	}
+	//Text mode
 	else {
 		--SpecificCP;
 		if (SpecificCP < MinCP || SpecificCP > MaxCP) {
@@ -575,6 +579,7 @@ int main(int argc, char* argv[]) {
 			free(CPColumn[CP]);
 		}
 	}
+	free(CPColumnHeight);
 	free(CPColumn);
 	VerboseMessage("\n");
 	printf("Done");
