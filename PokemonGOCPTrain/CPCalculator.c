@@ -1,6 +1,12 @@
+//Screw you and your security errors
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #endif
+
+//Fun fact: Comments directly above a macro
+//definitions are visible when hovering
+//over the macro in the middle of code.
+//That's why all macros have some sort of comment
 
 #define AbsMinPokemon 0
 #define AbsMaxPokemon 963
@@ -18,27 +24,45 @@
 #define AbsMinPercentIV 0.0
 #define AbsMaxPercentIV 1.0
 
+/*Wrapping other macro definitions in
+an empty do loop *forces* the macros to
+be invoked with a semicolon on the end
+without incurring any speed penalties*/
 #define DoSomething(OtherMacro) do {OtherMacro} while (0)
+/*This literally does nothing*/
 #define DoNothing do {} while (0)
 
+/*This prevents excess user input from
+"spilling over" into the next input check*/
 #define FlushStdIn() while ((getchar()) != '\n')
+
+/*These variable names are defined as macros
+to make it slightly more obvious that there's
+something abnormal about them, thus
+making sure the verbose macros stay intact*/
 
 #define VerboseMode Verbose
 #define VerboseDigits VerboseLength
 #define DenominatorName VerboseDenominator
 #define NumeratorName VerboseNumerator
 
-//This macro is literally just a toggleable printf.
-//The syntax is the same as the regular printf, but
-//it can be toggled on/off by defining PrintCrap
 #define PrintCrap
-
+//Messing with the macros/comments in the header area
+//tends to make this section flood with random errors.
+//Just Cut/Paste the whole block and they'll go away.
 #ifdef PrintCrap
+/*This macro is literally just a toggleable printf.
+The syntax is the same as the regular printf, but
+it can be toggled on/off by defining PrintCrap*/
 #define CrappyPrintf(...) DoSomething(printf(__VA_ARGS__);)
+/*Like CrappyPrintf, just specifically for verbosity. :P*/
 #define VerboseMessage(Label) DoSomething(\
 if (VerboseMode) {\
 	printf(Label);\
 })
+/*Prints the " /##" style progress bar
+*and* adjusts the spacing of the
+VerboseProgress macro to match*/
 #define VerboseProgressHeader(Label, Length) DoSomething(\
 if (VerboseMode) {\
 	printf(Label);\
@@ -47,6 +71,8 @@ if (VerboseMode) {\
 	NumeratorName[2] = VerboseDigits; \
 	printf(DenominatorName, '/', Length);\
 })
+/*Prints progress according to the string
+previously set by VerboseProgressHeader*/
 #define VerboseProgress(Value) DoSomething(\
 if (VerboseMode) {\
 	printf(NumeratorName, Value);\
@@ -58,15 +84,15 @@ if (VerboseMode) {\
 #define VerboseProgress(Value) DoNothing
 #endif
 
-//These macros are essentially just malloc/calloc with
-//inlined error checking. Do NOT use them in an if/else
-//structure without braces, otherwise the compiler gets AIDS
+/*Just malloc with inlined size
+calculation and error checking*/
 #define SaferMalloc(Type, Pointer, Count) \
 (Type*)malloc((size_t)Count * sizeof(Type));\
 DoSomething(if (!Pointer) {\
 	printf("malloc of size %zu failed!\n", (size_t)Count * sizeof(Type));\
 	exit(EXIT_FAILURE);\
 })
+/*Just calloc with inlined error checking*/
 #define SaferCalloc(Type, Pointer, Count) \
 (Type*)calloc(Count, sizeof(Type));\
 DoSomething(if (!Pointer) {\
@@ -74,16 +100,19 @@ DoSomething(if (!Pointer) {\
 	exit(EXIT_FAILURE);\
 })
 
+/*Checks to make sure the file didn't contain illegal values*/
 #define MinRangeCheck(Value, AbsValue, TypeChar) DoSomething(\
 if (Value < AbsValue) {\
 	printf("Error!\n%s(%"#TypeChar") cannot be less than %s(%"#TypeChar")!", #Value, Value, #AbsValue, AbsValue);\
 	exit(EXIT_FAILURE);\
 })
+/*Checks to make sure the file didn't contain illegal values*/
 #define MaxRangeCheck(Value, AbsValue, TypeChar) DoSomething(\
 if (Value > AbsValue) {\
 	printf("Error!\n%s(%"#TypeChar") cannot be greater than %s(%"#TypeChar")!", #Value, Value, #AbsValue, AbsValue);\
 	exit(EXIT_FAILURE);\
 })
+/*Checks to make sure the file didn't contain illegal values*/
 #define MinOverMaxCheck(MinValue, MaxValue, TypeChar) DoSomething(\
 if (MinValue > MaxValue) {\
 	printf("Error!\n%s(%"#TypeChar") cannot be greater than %s(%"#TypeChar")!", #MinValue, MinValue, #MaxValue, MaxValue);\
@@ -108,14 +137,10 @@ typedef uint_least16_t CPValue;
 typedef uint_fast16_t FastCPValue;
 //Hopefully there'll never be >4 billion outputs
 typedef uint_fast32_t CPComboCount;
-//Max level is 89
 typedef uint_fast8_t CPMIndexer;
 typedef uint_fast8_t LevelIndexer;
-//Max pokemon is 964
 typedef uint_fast16_t PokemonIndexer;
-//Max IV is 15
 typedef uint_fast8_t IVIndexer;
-//IV percentage
 typedef double IVPercent;
 
 #pragma pack(push, 1)
@@ -128,6 +153,8 @@ typedef struct CPComboStruct {
 } CPComboStruct;
 #pragma pack(pop)
 
+/*More things with inlined error checking.
+You may have noticed a trend by now.*/
 inline void* SaferResourceLoad(int ResourceFile) {
 	HRSRC GenericResourceHandle = FindResource(NULL, MAKEINTRESOURCE(ResourceFile), RT_RCDATA);
 	if (!GenericResourceHandle) {
@@ -170,30 +197,73 @@ int main(int argc, char* argv[]) {
 			(void)freopen(".\\DefaultSettings.ini", "rb", SettingsFile);
 		}
 		char SettingsBuffer[BUFSIZ];
-		uint16_t FPLevelFlag = 0;
-		uint16_t Temp8, Temp82;
+		Flag FPLevelFlag = 0;
+		uint8_t Temp8, Temp82;
 		double FPLevel;
+		//do {
+		//	//SettingsBuffer[0] = fgetc(SettingsFile);
+		//	fgets(SettingsBuffer, 1, SettingsFile);
+		//	if (SettingsBuffer[0] == 'M') {
+		//		fgets(SettingsBuffer, 2, SettingsFile);
+		//		if (!strcmp(SettingsBuffer, "in")) {
+		//			if (sscanf(SettingsBuffer, "MinPokemon=%u", &MinPokemon)) {
+		//				--MinPokemon;
+		//				MinRangeCheck(MinPokemon, AbsMinPokemon, u);
+		//			}
+		//			else if (sscanf(SettingsBuffer, "MinAttack=%hhu", &MinAttack)) {
+		//				MinRangeCheck(MinAttack, MinIV, u);
+		//			}
+		//			else if (sscanf(SettingsBuffer, "MinDefense=%hhu", &MinDefense)) {
+		//				MinRangeCheck(MinDefense, MinIV, u);
+		//			}
+		//			else if (sscanf(SettingsBuffer, "MinHP=%hhu", &MinHP)) {
+		//				MinRangeCheck(MinHP, MinIV, u);
+		//			}
+		//			else if (!FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%hhu", &MinLevel)) {
+		//				MinRangeCheck(MinLevel, AbsMinLevel, u);
+		//			}
+		//			else if (FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%lf", &FPLevel)) {
+		//				MinLevel = (LevelIndexer)((FPLevel * 2) - 1);
+		//				--MinLevel;
+		//				MinRangeCheck(MinLevel, AbsMinLevel, u);
+		//			}
+		//			else if (sscanf(SettingsBuffer, "Min%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
+		//				MinPercentIV = (double)Temp8 / (double)Temp82;
+		//				MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
+		//			}
+		//		}
+		//		else if (!strcmp(SettingsBuffer, "ax")) {
+		//
+		//		}
+		//	}
+		//	else if (SettingsBuffer[0] == 'F') {
+		//		fgets(SettingsBuffer, 3, SettingsFile);
+		//		if (!strcmp(SettingsBuffer, "lag")) {
+		//
+		//		}
+		//	}
+		//} while (!feof(SettingsFile));
 		fgets(SettingsBuffer, BUFSIZ, SettingsFile);
+		//REEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+		//This is valid code, shut up Visual Studio!
+		//https://developercommunityapi.westus.cloudapp.azure.com/content/problem/523033/static-analysis-doesnt-recognize-hh-length-modifie.html
+#pragma warning(disable:6328)		
 		while (!feof(SettingsFile)) {
 			if (!strncmp(SettingsBuffer, "Min", 3)) {
 				if (sscanf(SettingsBuffer, "MinPokemon=%u", &MinPokemon)) {
 					--MinPokemon;
 					MinRangeCheck(MinPokemon, AbsMinPokemon, u);
 				}
-				else if (sscanf(SettingsBuffer, "MinAttack=%hu", &Temp8)) {
-					MinAttack = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MinAttack=%hhu", &MinAttack)) {
 					MinRangeCheck(MinAttack, MinIV, u);
 				}
-				else if (sscanf(SettingsBuffer, "MinDefense=%hu", &Temp8)) {
-					MinDefense = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MinDefense=%hhu", &MinDefense)) {
 					MinRangeCheck(MinDefense, MinIV, u);
 				}
-				else if (sscanf(SettingsBuffer, "MinHP=%hu", &Temp8)) {
-					MinHP = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MinHP=%hhu", &MinHP)) {
 					MinRangeCheck(MinHP, MinIV, u);
 				}
-				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%hu", &Temp8)) {
-					MinLevel = (LevelIndexer)Temp8;
+				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%hhu", &MinLevel)) {
 					MinRangeCheck(MinLevel, AbsMinLevel, u);
 				}
 				else if (FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%lf", &FPLevel)) {
@@ -201,7 +271,7 @@ int main(int argc, char* argv[]) {
 					--MinLevel;
 					MinRangeCheck(MinLevel, AbsMinLevel, u);
 				}
-				else if (sscanf(SettingsBuffer, "Min%%IV=%hu/%hu", &Temp8, &Temp82)) {
+				else if (sscanf(SettingsBuffer, "Min%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
 					MinPercentIV = (double)Temp8 / (double)Temp82;
 					MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
 				}
@@ -211,20 +281,16 @@ int main(int argc, char* argv[]) {
 					--MaxPokemon;
 					MaxRangeCheck(MaxPokemon, AbsMaxPokemon, u);
 				}
-				else if (sscanf(SettingsBuffer, "MaxAttack=%hu", &Temp8)) {
-					MaxAttack = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MaxAttack=%hhu", &MaxAttack)) {
 					MaxRangeCheck(MaxAttack, MaxIV, u);
 				}
-				else if (sscanf(SettingsBuffer, "MaxDefense=%hu", &Temp8)) {
-					MaxDefense = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MaxDefense=%hhu", &MaxDefense)) {
 					MaxRangeCheck(MaxDefense, MaxIV, u);
 				}
-				else if (sscanf(SettingsBuffer, "MaxHP=%hu", &Temp8)) {
-					MaxHP = (IVIndexer)Temp8;
+				else if (sscanf(SettingsBuffer, "MaxHP=%hhu", &MaxHP)) {
 					MaxRangeCheck(MaxHP, MaxIV, u);
 				}
-				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MaxLevel=%hu", &Temp8)) {
-					MaxLevel = (LevelIndexer)Temp8;
+				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MaxLevel=%hhu", &MaxLevel)) {
 					MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
 				}
 				else if (FPLevelFlag && sscanf(SettingsBuffer, "MaxLevel=%lf", &FPLevel)) {
@@ -232,16 +298,17 @@ int main(int argc, char* argv[]) {
 					--MaxLevel;
 					MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
 				}
-				else if (sscanf(SettingsBuffer, "Max%%IV=%hu/%hu", &Temp8, &Temp82)) {
+				else if (sscanf(SettingsBuffer, "Max%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
 					MaxPercentIV = (double)Temp8 / (double)Temp82;
 					MaxRangeCheck(MaxPercentIV, AbsMaxPercentIV, lf);
 				}
 			}
 			else if (!strncmp(SettingsBuffer, "Flag", 4)) {
-				if (sscanf(SettingsBuffer, "FlagFPLevel=%hu", &FPLevelFlag));
+				if (sscanf(SettingsBuffer, "FlagFPLevel=%hhu", &FPLevelFlag));
 			}
 			fgets(SettingsBuffer, BUFSIZ, SettingsFile);
 		}
+#pragma warning(default:6328)
 		(void)fclose(SettingsFile);
 		MinOverMaxCheck(MinPokemon, MaxPokemon, u);
 		MinOverMaxCheck(MinLevel, MaxLevel, u);
@@ -322,15 +389,13 @@ int main(int argc, char* argv[]) {
 	CPComboCount* CPColumnHeight = SaferCalloc(CPComboCount, CPColumnHeight, ExcelMaxColumns);
 	CPValue* CachedCPs = SaferMalloc(CPValue, CachedCPs, PokemonCount * LevelCount * IVCount * IVCount * IVCount);
 	CPComboCount CPIndex = 0;
-	//This struct is used for holding many temporary values
 	PokemonStatsStruct* PokemonStats = (PokemonStatsStruct*)SaferResourceLoad(PokemonStats2File);
 	FastCPValue CP;
 	uint_fast16_t AttackStats[IVCount];
 	double DefenseStats[IVCount], HPStats[IVCount];
 	double AttackDefense;
 	VerboseProgressHeader("\nPokemon Count Pass 1:\n", PokemonCount - 1);
-	PokemonIndexer Pokemon;
-	for (Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
+	for (PokemonIndexer Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
 		VerboseProgress(Pokemon);
 		PokemonStatsStruct PokemonStats2 = PokemonStats[Pokemon];
 		for (IVIndexer Attack = MinAttack; Attack <= MaxAttack; ++Attack) {
@@ -390,6 +455,7 @@ int main(int argc, char* argv[]) {
 	}
 	VerboseProgressHeader("\nPokemon Count Pass 2:\n", PokemonCount - 1);
 	CPIndex = 0;
+	//This struct is used for holding many temporary values
 	CPComboStruct Combo;
 	for (Combo.Index = MinPokemon; Combo.Index <= MaxPokemon; ++Combo.Index) {
 		VerboseProgress(Combo.Index);
@@ -479,12 +545,13 @@ int main(int argc, char* argv[]) {
 		(void)fclose(GenericFile);
 	}
 	else {
+		--SpecificCP;
 		if (SpecificCP < MinCP || SpecificCP > MaxCP) {
-			printf("Specified CP is outside the calcualted range!");
+			printf("\nSpecified CP is outside the calcualted range!");
 			exit(EXIT_FAILURE);
 		}
 		if (!CPColumnHeight[SpecificCP]) {
-			printf("No results for specified CP!");
+			printf("\nNo results for specified CP!");
 			exit(EXIT_FAILURE);
 		}
 		char* PokemonNames = (char*)SaferResourceLoad(PokemonNamesFile);
@@ -498,7 +565,7 @@ int main(int argc, char* argv[]) {
 			TempStruct = CPColumn[SpecificCP][Row];
 			TempPercent = ((double)TempStruct.AttackIV + (double)TempStruct.DefenseIV + (double)TempStruct.HPIV) / (double)(MaxIV + MaxIV + MaxIV);
 			if (TempPercent >= MinPercentIV && TempPercent <= MaxPercentIV) {
-				(void)fprintf(GenericFile, "%-23s/%4.1f/%02u/%02u/%02u\r\n", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
+				(void)fprintf(GenericFile, "%-23s %4.1f %02u/%02u/%02u\r\n", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
 			}
 		}
 		(void)fclose(GenericFile);
