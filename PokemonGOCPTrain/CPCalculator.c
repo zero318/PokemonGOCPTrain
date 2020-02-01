@@ -543,6 +543,7 @@ int main(int argc, char* argv[]) {
 			++Row;
 			(void)fputs("</row>", GenericFile);
 		};
+		free(EndMySuffering);
 		//Print the XML footer
 		(void)fputs("</sheetData><pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>", GenericFile);
 		(void)fclose(GenericFile);
