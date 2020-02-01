@@ -191,6 +191,7 @@ int main(int argc, char* argv[]) {
 	IVPercent MinPercentIV = (double)(0 / 45), MaxPercentIV = (double)(45 / 45);
 	{
 		FILE* SettingsFile = fopen(".\\DefaultSettings.ini", "rb");
+
 		if (!SettingsFile) {
 			SettingsFile = fopen(".\\DefaultSettings.ini", "wb");
 			(void)fprintf(SettingsFile, "FlagFPLevel=1\r\nMinPokemon=1\r\nMaxPokemon=719\r\nMinLevel=1\r\nMaxLevel=40\r\nMinAttack=0\r\nMaxAttack=15\r\nMinDefense=0\r\nMaxDefense=15\r\nMinHP=0\r\nMaxHP=15\r\nMin%%IV=41/45\r\nMax%%IV=45/45\r\n");
