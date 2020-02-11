@@ -1,42 +1,60 @@
-Dragonite              /35.5/15/13/14
-Dragonite              /35.5/15/14/13
-Lugia                  /37.0/15/14/13
-Ho-Oh                  /34.0/15/15/14
-Metagross              /35.5/15/13/14
-Latios                 /35.0/15/14/14
-Kyogre                 /30.5/15/15/11
-Groudon                /30.5/15/15/11
-Rayquaza               /34.5/15/14/15
-Rayquaza               /35.0/15/12/14
-Dialga                 /31.5/15/12/15
-Dialga                 /31.5/15/13/14
-Dialga                 /31.5/15/14/13
-Dialga                 /31.5/15/15/12
-Heatran                /36.0/15/13/15
-Heatran                /36.0/15/14/14
-Heatran                /36.0/15/15/13
-Regigigas              /28.5/15/14/14
-Regigigas              /28.5/15/15/13
-Darkrai                /36.5/15/15/12
-Shaymin (Sky)          /39.0/15/14/14
-Darmanitan (Zen)       /36.0/15/15/15
-Darmanitan (Galar)(Zen)/34.0/15/12/14
-Haxorus                /39.0/15/15/13
-Hydreigon              /38.5/15/15/12
-Terrakion              /37.0/15/15/13
-Thundurus (Therian)    /38.0/15/12/15
-Reshiram               /31.5/15/12/15
-Reshiram               /31.5/15/13/14
-Reshiram               /31.5/15/14/13
-Reshiram               /31.5/15/15/12
-Zekrom                 /31.5/15/12/15
-Zekrom                 /31.5/15/13/14
-Zekrom                 /31.5/15/14/13
-Zekrom                 /31.5/15/15/12
-Kyurem                 /39.0/15/15/15
-Keldeo (Ordinary)      /37.0/15/15/13
-Keldeo (Resolute)      /37.0/15/15/13
-Meloetta (Aria)        /32.5/15/12/15
-Meloetta (Aria)        /32.5/15/13/14
-Meloetta (Aria)        /32.5/15/14/13
-Meloetta (Aria)        /32.5/15/15/12
+Pokemon Name            Lvl   IV% At/Df/HP
+——————————————————————————————————————————
+Dragonite               35.5  97% 14/15/15
+Mewtwo                  30.0  91% 11/15/15
+Mewtwo                  30.0  88% 14/13/13
+Mewtwo                  30.0  88% 15/10/15
+Tyranitar               35.0  93% 15/12/15
+Tyranitar               35.5  86% 14/13/12
+Lugia                   37.5  95% 13/15/15
+Lugia                   37.5  86% 15/10/14
+Lugia                   37.5  88% 15/14/11
+Lugia                   38.5  88% 10/15/15
+Ho-Oh                   34.5  93% 15/15/12
+Ho-Oh                   35.0  88% 13/15/12
+Ho-Oh                   35.0  86% 14/13/12
+Ho-Oh                   35.5  86% 10/15/14
+Salamence               37.0  88% 12/15/13
+Salamence               37.0  86% 15/12/12
+Metagross               36.0  88% 15/11/14
+Metagross               36.5  86% 12/15/12
+Latios                  35.5  91% 15/11/15
+Latios                  36.0  88% 11/14/15
+Latios                  36.0  86% 13/13/13
+Kyogre                  30.5  95% 14/15/14
+Kyogre                  31.0  91% 11/15/15
+Kyogre                  31.0  86% 14/11/14
+Groudon                 30.5  95% 14/15/14
+Groudon                 31.0  91% 11/15/15
+Groudon                 31.0  86% 14/11/14
+Rayquaza                35.0  93% 15/14/13
+Rayquaza                35.5  86% 15/12/12
+Garchomp                33.0  93% 14/13/15
+Garchomp                33.0  91% 15/14/12
+Rhyperior               37.0  88% 15/13/12
+Rhyperior               37.5  86% 12/14/13
+Dialga                  31.5  97% 14/15/15
+Dialga                  32.0  91% 13/13/15
+Dialga                  32.0  91% 13/14/14
+Dialga                  32.0  91% 13/15/13
+Dialga                  32.0  88% 15/14/11
+Dialga                  32.0  88% 15/15/10
+Dialga                  32.5  86% 10/14/15
+Palkia                  32.5  93% 14/13/15
+Palkia                  33.0  86% 13/11/15
+Palkia                  33.0  86% 14/14/11
+Giratina (Origin)       38.0  91% 13/15/13
+Giratina (Origin)       38.5  88% 11/14/15
+Giratina (Origin)       38.5  86% 12/13/14
+Darkrai                 37.0  91% 13/15/13
+Darkrai                 37.0  88% 15/11/14
+Darkrai                 37.5  86% 10/15/14
+Haxorus                 39.5  93% 14/13/15
+Haxorus                 40.0  88% 11/15/14
+Haxorus                 40.0  86% 15/10/14
+Haxorus                 40.0  86% 15/11/13
+Hydreigon               39.0  91% 14/15/12
+Terrakion               37.5  93% 14/13/15
+Terrakion               37.5  93% 14/14/14
+Terrakion               38.0  88% 12/13/15
+Terrakion               38.0  86% 14/10/15

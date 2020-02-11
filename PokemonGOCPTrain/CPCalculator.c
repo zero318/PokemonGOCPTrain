@@ -21,8 +21,10 @@
 #define MinCPM 0
 #define MaxCPM 44
 #define CPMCount ((MaxCPM - MinCPM) + 1)
-#define AbsMinPercentIV 0.0
-#define AbsMaxPercentIV 1.0
+//#define AbsMinPercentIV 0.0
+//#define AbsMaxPercentIV 1.0
+#define AbsMinPercentIV 0
+#define AbsMaxPercentIV 45
 
 /*Wrapping other macro definitions in
 an empty do loop *forces* the macros to
@@ -141,7 +143,8 @@ typedef uint_fast8_t CPMIndexer;
 typedef uint_fast8_t LevelIndexer;
 typedef uint_fast16_t PokemonIndexer;
 typedef uint_fast8_t IVIndexer;
-typedef double IVPercent;
+//typedef double IVPercent;
+typedef uint_fast8_t IVPercent;
 
 #pragma pack(push, 1)
 typedef struct PokemonStatsStruct {
@@ -188,19 +191,19 @@ int main(int argc, char* argv[]) {
 	IVIndexer MinAttack = MinIV, MaxAttack = MaxIV;
 	IVIndexer MinDefense = MinIV, MaxDefense = MaxIV;
 	IVIndexer MinHP = MinIV, MaxHP = MaxIV;
-	IVPercent MinPercentIV = (double)(0 / 45), MaxPercentIV = (double)(45 / 45);
+	//IVPercent MinPercentIV = (double)(0 / 45), MaxPercentIV = (double)(45 / 45);
+	IVPercent MinPercentIV = 0, MaxPercentIV = 45;
 	PokemonIndexer PokemonList[AbsPokemonCount];
 	{
 		FILE* SettingsFile = fopen(".\\DefaultSettings.ini", "rb");
-
 		if (!SettingsFile) {
 			SettingsFile = fopen(".\\DefaultSettings.ini", "wb");
 			(void)fprintf(SettingsFile, "FlagFPLevel=1\r\nMinPokemon=1\r\nMaxPokemon=719\r\nMinLevel=1\r\nMaxLevel=40\r\nMinAttack=0\r\nMaxAttack=15\r\nMinDefense=0\r\nMaxDefense=15\r\nMinHP=0\r\nMaxHP=15\r\nMin%%IV=41/45\r\nMax%%IV=45/45\r\n");
 			(void)freopen(".\\DefaultSettings.ini", "rb", SettingsFile);
 		}
 		char SettingsBuffer[BUFSIZ];
-		PokemonIndexer MinPokemon = 0, MaxPokemon = 0;
-		uint8_t Temp8, Temp82;
+		PokemonIndexer MinPokemon = 0, MaxPokemon = 0, Exclude = UINT_FAST16_MAX;
+		//uint8_t Temp8, Temp82;
 		double FPLevel;
 		//REEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 		//This is valid code, shut up Visual Studio!
@@ -228,9 +231,12 @@ int main(int argc, char* argv[]) {
 						MinLevel = (LevelIndexer)((FPLevel * 2) - 2);
 						MinRangeCheck(MinLevel, AbsMinLevel, u);
 					}
-					else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
+					/*else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82) == 2) {
 						MinPercentIV = (double)Temp8 / (double)Temp82;
 						MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
+					}*/
+					else if (sscanf(SettingsBuffer, "%%IV=%hhu/45", &MinPercentIV)) {
+						MinRangeCheck(MinPercentIV, AbsMinPercentIV, u);
 					}
 				}
 				else if (!strcmp(SettingsBuffer, "ax")) {
@@ -251,9 +257,12 @@ int main(int argc, char* argv[]) {
 						MaxLevel = (LevelIndexer)((FPLevel * 2) - 2);
 						MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
 					}
-					else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
+					/*else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82) == 2) {
 						MaxPercentIV = (double)Temp8 / (double)Temp82;
 						MaxRangeCheck(MaxPercentIV, AbsMaxPercentIV, lf);
+					}*/
+					else if (sscanf(SettingsBuffer, "%%IV=%hhu/45", &MaxPercentIV)) {
+						MaxRangeCheck(MaxPercentIV, AbsMaxPercentIV, u);
 					}
 				}
 			}
@@ -263,14 +272,29 @@ int main(int argc, char* argv[]) {
 					fgets(SettingsBuffer, BUFSIZ, SettingsFile);
 					char* Delim = ",";
 					char* PokemonToken = strtok(SettingsBuffer, Delim);
-					PokemonIndexer MinPokeBound, MaxPokeBound;
 					while (PokemonToken) {
-						(void)sscanf(PokemonToken, "%u-%u", &MinPokeBound, &MaxPokeBound);
-						for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
-							PokemonList[PokemonCount] = Pokemon;
-							++PokemonCount;
+						PokemonIndexer MinPokeBound, MaxPokeBound;
+						switch (sscanf(PokemonToken, "%u-%u", &MinPokeBound, &MaxPokeBound)) {
+							case 1:
+								MaxPokeBound = MinPokeBound;
+							case 2:
+								--MinPokeBound;
+								--MaxPokeBound;
+								for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
+									PokemonList[PokemonCount] = Pokemon;
+									++PokemonCount;
+								}
 						}
 						PokemonToken = strtok(NULL, Delim);
+					}
+				}
+			}
+			else if (SettingsBuffer[0] == 'E') {
+				fgets(SettingsBuffer, 8, SettingsFile);
+				if (!strcmp(SettingsBuffer, "xclude=")) {
+					fgets(SettingsBuffer, 4, SettingsFile);
+					if (sscanf(SettingsBuffer, "%u", &Exclude)) {
+						--Exclude;
 					}
 				}
 			}
@@ -285,8 +309,20 @@ int main(int argc, char* argv[]) {
 		MinOverMaxCheck(MinAttack, MaxAttack, u);
 		MinOverMaxCheck(MinDefense, MaxDefense, u);
 		MinOverMaxCheck(MinHP, MaxHP, u);
-		MinOverMaxCheck(MinPercentIV, MaxPercentIV, lf);
+		//MinOverMaxCheck(MinPercentIV, MaxPercentIV, lf);
+		MinOverMaxCheck(MinPercentIV, MaxPercentIV, u);
 		LevelCount = (MaxLevel - MinLevel + 1);
+		if (!PokemonCount) {
+			printf("No pokemon selected!");
+			exit(EXIT_FAILURE);
+		}
+		for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
+			if (PokemonList[PokemonListIndex] == Exclude) {
+				memmove(&PokemonList[PokemonListIndex], &PokemonList[PokemonListIndex + 1], ((PokemonCount - PokemonListIndex) - 1) * sizeof(PokemonIndexer));
+				--PokemonCount;
+				break;
+			}
+		}
 		for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
 			if (PokemonList[PokemonListIndex] >= MinPokemon) {
 				MinPokemonIndex = PokemonListIndex;
@@ -379,8 +415,7 @@ int main(int argc, char* argv[]) {
 	uint_fast16_t AttackStats[IVCount];
 	double DefenseStats[IVCount], HPStats[IVCount];
 	double AttackDefense;
-	VerboseProgressHeader("\nPokemon Count Pass 1:\n", PokemonCount - 1);
-	//for (PokemonIndexer Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
+	VerboseProgressHeader("\nPokemon Count Pass 1:\n", PokemonCount);
 	for (PokemonIndexer PokemonListIndex = MinPokemonIndex; PokemonListIndex <= MaxPokemonIndex; ++PokemonListIndex) {
 		VerboseProgress(PokemonListIndex);
 		PokemonIndexer Pokemon = PokemonList[PokemonListIndex];
@@ -441,11 +476,10 @@ int main(int argc, char* argv[]) {
 			CPColumnHeight[CP] = 0;
 		}
 	}
-	VerboseProgressHeader("\nPokemon Count Pass 2:\n", PokemonCount - 1);
+	VerboseProgressHeader("\nPokemon Count Pass 2:\n", PokemonCount);
 	CPIndex = 0;
 	//This struct is used for holding many temporary values
 	CPComboStruct Combo;
-	//for (Combo.Index = MinPokemon; Combo.Index <= MaxPokemon; ++Combo.Index) {
 	for (PokemonIndexer PokemonListIndex = MinPokemonIndex; PokemonListIndex <= MaxPokemonIndex; ++PokemonListIndex) {
 		VerboseProgress(PokemonListIndex);
 		Combo.Index = PokemonList[PokemonListIndex];
@@ -551,19 +585,41 @@ int main(int argc, char* argv[]) {
 		}
 		char* PokemonNames = (char*)SaferResourceLoad(PokemonNamesFile);
 		double TrueLevel[89] = { 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5, 18.0, 18.5, 19.0, 19.5, 20.0, 20.5, 21.0, 21.5, 22.0, 22.5, 23.0, 23.5, 24.0, 24.5, 25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 28.5, 29.0, 29.5, 30.0, 30.5, 31.0, 31.5, 32.0, 32.5, 33.0, 33.5, 34.0, 34.5, 35.0, 35.5, 36.0, 36.5, 37.0, 37.5, 38.0, 38.5, 39.0, 39.5, 40.0, 40.5, 41.0, 41.5, 42.0, 42.5, 43.0, 43.5, 44.0, 44.5, 45.0 };
-		FILE* GenericFile = fopen(".\\CPOutput.txt", "w+b");
+		IVPercent DisplayPercents[46] = { 0, 2, 4, 6, 8, 11, 13, 15, 17, 20, 22, 24, 26, 28, 31, 33, 35, 37, 40, 42, 44, 46, 48, 51, 53, 55, 57, 60, 62, 64, 66, 68, 71, 73, 75, 77, 80, 82, 84, 86, 88, 91, 93, 95, 97, 100 };
+		FILE* CPOutputFile = fopen(".\\CPOutput.txt", "w+b");
 		VerboseProgressHeader("\nRow Parsing 1:\n", CPColumnHeight[SpecificCP] - 1);
 		CPComboStruct TempStruct;
 		IVPercent TempPercent;
+		CPComboCount Row = 0;
+		//char* CPPrintFormat = "\r\n%-23s %4.1f %3hhu%% %02u/%02u/%02u";
+		(void)fprintf(CPOutputFile, "Pokemon Name            Lvl   IV%% At/Df/HP\r\n——————————————————————————————————————————");
 		for (CPComboCount Row = 0; Row < CPColumnHeight[SpecificCP]; ++Row) {
 			VerboseProgress(Row);
 			TempStruct = CPColumn[SpecificCP][Row];
-			TempPercent = ((double)TempStruct.AttackIV + (double)TempStruct.DefenseIV + (double)TempStruct.HPIV) / (double)(MaxIV + MaxIV + MaxIV);
+			TempPercent = TempStruct.AttackIV + TempStruct.DefenseIV + TempStruct.HPIV;
 			if (TempPercent >= MinPercentIV && TempPercent <= MaxPercentIV) {
-				(void)fprintf(GenericFile, "%-23s %4.1f %02u/%02u/%02u\r\n", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
+				(void)fprintf(CPOutputFile, "\r\n%-23s %4.1f %3hhu%% %02u/%02u/%02u", &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], DisplayPercents[TempPercent], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
 			}
 		}
-		(void)fclose(GenericFile);
+		/*if (Row < CPColumnHeight[SpecificCP]) {
+			VerboseProgress(Row);
+			TempStruct = CPColumn[SpecificCP][Row];
+			TempPercent = TempStruct.AttackIV + TempStruct.DefenseIV + TempStruct.HPIV;
+			if (TempPercent >= MinPercentIV && TempPercent <= MaxPercentIV) {
+				(void)fprintf(CPOutputFile, &CPPrintFormat[2], &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], DisplayPercents[TempPercent], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
+			}
+			++Row;
+		}
+		while (Row < CPColumnHeight[SpecificCP]) {
+			VerboseProgress(Row);
+			TempStruct = CPColumn[SpecificCP][Row];
+			TempPercent = TempStruct.AttackIV + TempStruct.DefenseIV + TempStruct.HPIV; 
+			if (TempPercent >= MinPercentIV && TempPercent <= MaxPercentIV) {
+				(void)fprintf(CPOutputFile, CPPrintFormat, &PokemonNames[TempStruct.Index * 24], TrueLevel[TempStruct.Level], DisplayPercents[TempPercent], TempStruct.AttackIV, TempStruct.DefenseIV, TempStruct.HPIV);
+			}
+			++Row;
+		}*/
+		(void)fclose(CPOutputFile);
 	}
 	for (CP = 0; CP <= MaxCP; ++CP) {
 		if (CPColumnHeight[CP]) {
@@ -573,6 +629,7 @@ int main(int argc, char* argv[]) {
 	free(CPColumnHeight);
 	free(CPColumn);
 	VerboseMessage("\n");
-	printf("Done");
+	printf("Done.\nPress Enter to exit.");
+	(void)getchar();
 	exit(EXIT_SUCCESS);
 }
