@@ -183,12 +183,13 @@ int main(int argc, char* argv[]) {
 	char DenominatorName[6] = { '%', '\0', 'c', '%', 'u', '\0' };
 	char NumeratorName[5] = { '\r', '%', '\0', 'u', '\0' };
 #endif
-	PokemonIndexer MinPokemon = AbsMinPokemon, MaxPokemon = AbsMaxPokemon, PokemonCount;
+	PokemonIndexer MinPokemonIndex = AbsMinPokemon, MaxPokemonIndex = AbsMaxPokemon, PokemonCount = 0;
 	LevelIndexer MinLevel = AbsMinLevel, MaxLevel = AbsMaxLevel, LevelCount;
 	IVIndexer MinAttack = MinIV, MaxAttack = MaxIV;
 	IVIndexer MinDefense = MinIV, MaxDefense = MaxIV;
 	IVIndexer MinHP = MinIV, MaxHP = MaxIV;
 	IVPercent MinPercentIV = (double)(0 / 45), MaxPercentIV = (double)(45 / 45);
+	PokemonIndexer PokemonList[AbsPokemonCount];
 	{
 		FILE* SettingsFile = fopen(".\\DefaultSettings.ini", "rb");
 
@@ -198,117 +199,85 @@ int main(int argc, char* argv[]) {
 			(void)freopen(".\\DefaultSettings.ini", "rb", SettingsFile);
 		}
 		char SettingsBuffer[BUFSIZ];
-		Flag FPLevelFlag = 0;
+		PokemonIndexer MinPokemon = 0, MaxPokemon = 0;
 		uint8_t Temp8, Temp82;
 		double FPLevel;
-		//do {
-		//	//SettingsBuffer[0] = fgetc(SettingsFile);
-		//	fgets(SettingsBuffer, 1, SettingsFile);
-		//	if (SettingsBuffer[0] == 'M') {
-		//		fgets(SettingsBuffer, 2, SettingsFile);
-		//		if (!strcmp(SettingsBuffer, "in")) {
-		//			if (sscanf(SettingsBuffer, "MinPokemon=%u", &MinPokemon)) {
-		//				--MinPokemon;
-		//				MinRangeCheck(MinPokemon, AbsMinPokemon, u);
-		//			}
-		//			else if (sscanf(SettingsBuffer, "MinAttack=%hhu", &MinAttack)) {
-		//				MinRangeCheck(MinAttack, MinIV, u);
-		//			}
-		//			else if (sscanf(SettingsBuffer, "MinDefense=%hhu", &MinDefense)) {
-		//				MinRangeCheck(MinDefense, MinIV, u);
-		//			}
-		//			else if (sscanf(SettingsBuffer, "MinHP=%hhu", &MinHP)) {
-		//				MinRangeCheck(MinHP, MinIV, u);
-		//			}
-		//			else if (!FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%hhu", &MinLevel)) {
-		//				MinRangeCheck(MinLevel, AbsMinLevel, u);
-		//			}
-		//			else if (FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%lf", &FPLevel)) {
-		//				MinLevel = (LevelIndexer)((FPLevel * 2) - 1);
-		//				--MinLevel;
-		//				MinRangeCheck(MinLevel, AbsMinLevel, u);
-		//			}
-		//			else if (sscanf(SettingsBuffer, "Min%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
-		//				MinPercentIV = (double)Temp8 / (double)Temp82;
-		//				MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
-		//			}
-		//		}
-		//		else if (!strcmp(SettingsBuffer, "ax")) {
-		//
-		//		}
-		//	}
-		//	else if (SettingsBuffer[0] == 'F') {
-		//		fgets(SettingsBuffer, 3, SettingsFile);
-		//		if (!strcmp(SettingsBuffer, "lag")) {
-		//
-		//		}
-		//	}
-		//} while (!feof(SettingsFile));
-		fgets(SettingsBuffer, BUFSIZ, SettingsFile);
 		//REEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 		//This is valid code, shut up Visual Studio!
 		//https://developercommunityapi.westus.cloudapp.azure.com/content/problem/523033/static-analysis-doesnt-recognize-hh-length-modifie.html
-#pragma warning(disable:6328)		
-		while (!feof(SettingsFile)) {
-			if (!strncmp(SettingsBuffer, "Min", 3)) {
-				if (sscanf(SettingsBuffer, "MinPokemon=%u", &MinPokemon)) {
-					--MinPokemon;
-					MinRangeCheck(MinPokemon, AbsMinPokemon, u);
+#pragma warning(disable:6328)	
+		do {
+			fgets(SettingsBuffer, 2, SettingsFile);
+			if (SettingsBuffer[0] == 'M') {
+				fgets(SettingsBuffer, 3, SettingsFile);
+				if (!strcmp(SettingsBuffer, "in")) {
+					fgets(SettingsBuffer, BUFSIZ, SettingsFile);
+					if (sscanf(SettingsBuffer, "Pokemon=%u", &MinPokemon)) {
+						MinRangeCheck(MinPokemon, AbsMinPokemon, u);
+					}
+					else if (sscanf(SettingsBuffer, "Attack=%hhu", &MinAttack)) {
+						MinRangeCheck(MinAttack, MinIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "Defense=%hhu", &MinDefense)) {
+						MinRangeCheck(MinDefense, MinIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "HP=%hhu", &MinHP)) {
+						MinRangeCheck(MinHP, MinIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "Level=%lf", &FPLevel)) {
+						MinLevel = (LevelIndexer)((FPLevel * 2) - 2);
+						MinRangeCheck(MinLevel, AbsMinLevel, u);
+					}
+					else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
+						MinPercentIV = (double)Temp8 / (double)Temp82;
+						MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
+					}
 				}
-				else if (sscanf(SettingsBuffer, "MinAttack=%hhu", &MinAttack)) {
-					MinRangeCheck(MinAttack, MinIV, u);
-				}
-				else if (sscanf(SettingsBuffer, "MinDefense=%hhu", &MinDefense)) {
-					MinRangeCheck(MinDefense, MinIV, u);
-				}
-				else if (sscanf(SettingsBuffer, "MinHP=%hhu", &MinHP)) {
-					MinRangeCheck(MinHP, MinIV, u);
-				}
-				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%hhu", &MinLevel)) {
-					MinRangeCheck(MinLevel, AbsMinLevel, u);
-				}
-				else if (FPLevelFlag && sscanf(SettingsBuffer, "MinLevel=%lf", &FPLevel)) {
-					MinLevel = (LevelIndexer)((FPLevel * 2) - 1);
-					--MinLevel;
-					MinRangeCheck(MinLevel, AbsMinLevel, u);
-				}
-				else if (sscanf(SettingsBuffer, "Min%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
-					MinPercentIV = (double)Temp8 / (double)Temp82;
-					MinRangeCheck(MinPercentIV, AbsMinPercentIV, lf);
-				}
-			}
-			else if (!strncmp(SettingsBuffer, "Max", 3)) {
-				if (sscanf(SettingsBuffer, "MaxPokemon=%u", &MaxPokemon)) {
-					--MaxPokemon;
-					MaxRangeCheck(MaxPokemon, AbsMaxPokemon, u);
-				}
-				else if (sscanf(SettingsBuffer, "MaxAttack=%hhu", &MaxAttack)) {
-					MaxRangeCheck(MaxAttack, MaxIV, u);
-				}
-				else if (sscanf(SettingsBuffer, "MaxDefense=%hhu", &MaxDefense)) {
-					MaxRangeCheck(MaxDefense, MaxIV, u);
-				}
-				else if (sscanf(SettingsBuffer, "MaxHP=%hhu", &MaxHP)) {
-					MaxRangeCheck(MaxHP, MaxIV, u);
-				}
-				else if (!FPLevelFlag && sscanf(SettingsBuffer, "MaxLevel=%hhu", &MaxLevel)) {
-					MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
-				}
-				else if (FPLevelFlag && sscanf(SettingsBuffer, "MaxLevel=%lf", &FPLevel)) {
-					MaxLevel = (LevelIndexer)((FPLevel * 2) - 1);
-					--MaxLevel;
-					MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
-				}
-				else if (sscanf(SettingsBuffer, "Max%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
-					MaxPercentIV = (double)Temp8 / (double)Temp82;
-					MaxRangeCheck(MaxPercentIV, AbsMaxPercentIV, lf);
+				else if (!strcmp(SettingsBuffer, "ax")) {
+					fgets(SettingsBuffer, BUFSIZ, SettingsFile);
+					if (sscanf(SettingsBuffer, "Pokemon=%u", &MaxPokemon)) {
+						MaxRangeCheck(MaxPokemon, AbsMaxPokemon, u);
+					}
+					else if (sscanf(SettingsBuffer, "Attack=%hhu", &MaxAttack)) {
+						MaxRangeCheck(MaxAttack, MaxIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "Defense=%hhu", &MaxDefense)) {
+						MaxRangeCheck(MaxDefense, MaxIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "HP=%hhu", &MaxHP)) {
+						MaxRangeCheck(MaxHP, MaxIV, u);
+					}
+					else if (sscanf(SettingsBuffer, "Level=%lf", &FPLevel)) {
+						MaxLevel = (LevelIndexer)((FPLevel * 2) - 2);
+						MaxRangeCheck(MaxLevel, AbsMaxLevel, u);
+					}
+					else if (sscanf(SettingsBuffer, "%%IV=%hhu/%hhu", &Temp8, &Temp82)) {
+						MaxPercentIV = (double)Temp8 / (double)Temp82;
+						MaxRangeCheck(MaxPercentIV, AbsMaxPercentIV, lf);
+					}
 				}
 			}
-			else if (!strncmp(SettingsBuffer, "Flag", 4)) {
-				if (sscanf(SettingsBuffer, "FlagFPLevel=%hhu", &FPLevelFlag));
+			else if (SettingsBuffer[0] == 'I') {
+				fgets(SettingsBuffer, 8, SettingsFile);
+				if (!strcmp(SettingsBuffer, "nclude=")) {
+					fgets(SettingsBuffer, BUFSIZ, SettingsFile);
+					char* Delim = ",";
+					char* PokemonToken = strtok(SettingsBuffer, Delim);
+					PokemonIndexer MinPokeBound, MaxPokeBound;
+					while (PokemonToken) {
+						(void)sscanf(PokemonToken, "%u-%u", &MinPokeBound, &MaxPokeBound);
+						for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
+							PokemonList[PokemonCount] = Pokemon;
+							++PokemonCount;
+						}
+						PokemonToken = strtok(NULL, Delim);
+					}
+				}
 			}
-			fgets(SettingsBuffer, BUFSIZ, SettingsFile);
-		}
+			else {
+				fgets(SettingsBuffer, BUFSIZ, SettingsFile);
+			}
+		} while (!feof(SettingsFile));
 #pragma warning(default:6328)
 		(void)fclose(SettingsFile);
 		MinOverMaxCheck(MinPokemon, MaxPokemon, u);
@@ -317,20 +286,35 @@ int main(int argc, char* argv[]) {
 		MinOverMaxCheck(MinDefense, MaxDefense, u);
 		MinOverMaxCheck(MinHP, MaxHP, u);
 		MinOverMaxCheck(MinPercentIV, MaxPercentIV, lf);
-		PokemonCount = (MaxPokemon - MinPokemon) + 1;
 		LevelCount = (MaxLevel - MinLevel + 1);
+		for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
+			if (PokemonList[PokemonListIndex] >= MinPokemon) {
+				MinPokemonIndex = PokemonListIndex;
+				break;
+			}
+		}
+#pragma warning(suppress:6295)
+		for (PokemonIndexer PokemonListIndex = PokemonCount - 1; PokemonListIndex >= 0; --PokemonListIndex) {
+#pragma warning(suppress:6001)
+#pragma warning(suppress:6385)
+			if (PokemonList[PokemonListIndex] <= MaxPokemon) {
+				MaxPokemonIndex = PokemonListIndex;
+				break;
+			}
+		}
+		PokemonCount = (MaxPokemonIndex - MinPokemonIndex) + 1;
 	}
 	if (argc > 1) {
 		CrappyPrintf("Pokemon GO CP Combination Calculator\n");
 	}
 	else {
 		printf("Pokemon GO CP Combination Calculator\n"
-			   "1. XLSX Mode (Verbose)\n"
-			   "2. XLSX Mode\n"
-			   "3. Text Mode (Verbose)\n"
-			   "4. Text Mode\n"
-		       "5. Exit\n"
-		       "S");
+			"1. XLSX Mode (Verbose)\n"
+			"2. XLSX Mode\n"
+			"3. Text Mode (Verbose)\n"
+			"4. Text Mode\n"
+			"5. Exit\n"
+			"S");
 		Flag UserIsDumb = 0;
 		int ModeSelect = 0;
 		char Nope;
@@ -343,31 +327,31 @@ int main(int argc, char* argv[]) {
 			}
 		} while (UserIsDumb != 1);
 		switch (ModeSelect) {
-			case 1:
-				Verbose = 1;
-			case 2:
-				OutputMode = 0;
-				break;
-			case 3:
-				Verbose = 1;
-			case 4:
-				OutputMode = 1;
-				printf("S");
-				do {
-					printf("elect a CP value: ");
-					UserIsDumb = scanf("%u%1[^\n]", &SpecificCP, &Nope);
-					FlushStdIn();
-					if (UserIsDumb != 1) {
-						printf("*Properly* s");
-					}
-				} while (UserIsDumb != 1);
-				break;
-			case 5:
-				printf("Yee");
-				exit(EXIT_SUCCESS);
-			default:
-				printf("That wasn't an option. :P");
-				exit(EXIT_SUCCESS);
+		case 1:
+			Verbose = 1;
+		case 2:
+			OutputMode = 0;
+			break;
+		case 3:
+			Verbose = 1;
+		case 4:
+			OutputMode = 1;
+			printf("S");
+			do {
+				printf("elect a CP value: ");
+				UserIsDumb = scanf("%u%1[^\n]", &SpecificCP, &Nope);
+				FlushStdIn();
+				if (UserIsDumb != 1) {
+					printf("*Properly* s");
+				}
+			} while (UserIsDumb != 1);
+			break;
+		case 5:
+			printf("Yee");
+			exit(EXIT_SUCCESS);
+		default:
+			printf("That wasn't an option. :P");
+			exit(EXIT_SUCCESS);
 		}
 	}
 	double* CPM = SaferMalloc(double, CPM, AbsLevelCount);
@@ -396,8 +380,10 @@ int main(int argc, char* argv[]) {
 	double DefenseStats[IVCount], HPStats[IVCount];
 	double AttackDefense;
 	VerboseProgressHeader("\nPokemon Count Pass 1:\n", PokemonCount - 1);
-	for (PokemonIndexer Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
-		VerboseProgress(Pokemon);
+	//for (PokemonIndexer Pokemon = MinPokemon; Pokemon <= MaxPokemon; ++Pokemon) {
+	for (PokemonIndexer PokemonListIndex = MinPokemonIndex; PokemonListIndex <= MaxPokemonIndex; ++PokemonListIndex) {
+		VerboseProgress(PokemonListIndex);
+		PokemonIndexer Pokemon = PokemonList[PokemonListIndex];
 		PokemonStatsStruct PokemonStats2 = PokemonStats[Pokemon];
 		for (IVIndexer Attack = MinAttack; Attack <= MaxAttack; ++Attack) {
 			AttackStats[Attack] = PokemonStats2.BaseAttack + Attack;
@@ -420,6 +406,7 @@ int main(int argc, char* argv[]) {
 						//This list could also be used for generating sharedstrings
 #pragma warning(suppress:26451)
 						CP = (FastCPValue)(((AttackDefense * HPStats[HP] * CPM[Level]) / 10) - 1);
+#pragma warning(suppress:6386)
 						CachedCPs[CPIndex] = CP;
 						++CPColumnHeight[CP];
 						++CPIndex;
@@ -458,8 +445,10 @@ int main(int argc, char* argv[]) {
 	CPIndex = 0;
 	//This struct is used for holding many temporary values
 	CPComboStruct Combo;
-	for (Combo.Index = MinPokemon; Combo.Index <= MaxPokemon; ++Combo.Index) {
-		VerboseProgress(Combo.Index);
+	//for (Combo.Index = MinPokemon; Combo.Index <= MaxPokemon; ++Combo.Index) {
+	for (PokemonIndexer PokemonListIndex = MinPokemonIndex; PokemonListIndex <= MaxPokemonIndex; ++PokemonListIndex) {
+		VerboseProgress(PokemonListIndex);
+		Combo.Index = PokemonList[PokemonListIndex];
 		for (Combo.Level = MinLevel; Combo.Level <= MaxLevel; ++Combo.Level) {
 			for (Combo.AttackIV = MinAttack; Combo.AttackIV <= MaxAttack; ++Combo.AttackIV) {
 				for (Combo.DefenseIV = MinDefense; Combo.DefenseIV <= MaxDefense; ++Combo.DefenseIV) {
