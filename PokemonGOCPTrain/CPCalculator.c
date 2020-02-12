@@ -169,20 +169,12 @@ inline void* SaferResourceLoad(int ResourceFile) {
 	return LockResource(GenericResource);
 }
 
-int main(/*int argc, char* argv[]*/) {
+int main() {
 	//Set the process priority as high as possible since maybe it'll run faster
 	HANDLE CalculatorProcess = GetCurrentProcess();
 	SetPriorityClass(CalculatorProcess, REALTIME_PRIORITY_CLASS);
-	//yee
-	Flag OutputMode = 0;
-	FastCPValue SpecificCP = 0;
-	//These are defined as macros so they can be updated gloablly
-	Flag VerboseMode = 0;
-#ifdef PrintCrap
-	uint_fast8_t VerboseDigits;
-	char DenominatorName[6] = { '%', '\0', 'c', '%', 'u', '\0' };
-	char NumeratorName[5] = { '\r', '%', '\0', 'u', '\0' };
-#endif
+	Flag RunLoop = 1;
+	do {//while (RunLoop)
 	PokemonIndexer MinPokemonIndex = AbsMinPokemon, MaxPokemonIndex = AbsMaxPokemon, PokemonCount = 0;
 	LevelIndexer MinLevel = AbsMinLevel, MaxLevel = AbsMaxLevel, LevelCount;
 	IVIndexer MinAttack = MinIV, MaxAttack = MaxIV;
@@ -262,16 +254,16 @@ int main(/*int argc, char* argv[]*/) {
 					while (PokemonToken) {
 						PokemonIndexer MinPokeBound, MaxPokeBound;
 						switch (sscanf(PokemonToken, "%u-%u", &MinPokeBound, &MaxPokeBound)) {
-						case 1:
-							MaxPokeBound = MinPokeBound;
-						case 2:
-							--MinPokeBound;
-							--MaxPokeBound;
-							MinOverMaxCheck(MinPokeBound, MaxPokeBound);
-							for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
-								PokemonList[PokemonCount] = Pokemon;
-								++PokemonCount;
-							}
+							case 1:
+								MaxPokeBound = MinPokeBound;
+							case 2:
+								--MinPokeBound;
+								--MaxPokeBound;
+								MinOverMaxCheck(MinPokeBound, MaxPokeBound);
+								for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
+									PokemonList[PokemonCount] = Pokemon;
+									++PokemonCount;
+								}
 						}
 						PokemonToken = strtok(NULL, Delim);
 					}
@@ -303,11 +295,13 @@ int main(/*int argc, char* argv[]*/) {
 			printf("No pokemon selected!");
 			exit(EXIT_FAILURE);
 		}
-		for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
-			if (PokemonList[PokemonListIndex] == Exclude) {
-				memmove(&PokemonList[PokemonListIndex], &PokemonList[PokemonListIndex + 1], ((PokemonCount - PokemonListIndex) - 1) * sizeof(PokemonIndexer));
-				--PokemonCount;
-				break;
+		if (Exclude != UINT_FAST16_MAX) {
+			for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
+				if (PokemonList[PokemonListIndex] == Exclude) {
+					memmove(&PokemonList[PokemonListIndex], &PokemonList[PokemonListIndex + 1], ((PokemonCount - PokemonListIndex) - 1) * sizeof(PokemonIndexer));
+					--PokemonCount;
+					break;
+				}
 			}
 		}
 		for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
@@ -326,19 +320,30 @@ int main(/*int argc, char* argv[]*/) {
 			}
 		}
 		PokemonCount = (MaxPokemonIndex - MinPokemonIndex) + 1;
-	}
-	{
 		if (!PokemonCount) {
 			printf("No pokemon selected!");
 			exit(EXIT_FAILURE);
 		}
+	}
+	do {//while (RunLoop == 2)
+	//yee
+	Flag OutputMode = 0;
+	FastCPValue SpecificCP = 0;
+	//These are defined as macros so they can be updated gloablly
+	Flag VerboseMode = 0;
+#ifdef PrintCrap
+	uint_fast8_t VerboseDigits;
+	char DenominatorName[6] = { '%', '\0', 'c', '%', 'u', '\0' };
+	char NumeratorName[5] = { '\r', '%', '\0', 'u', '\0' };
+#endif
+	{
 		printf("Pokemon GO CP Combination Calculator\n"
-			"1. XLSX Mode (Verbose)\n"
-			"2. XLSX Mode\n"
-			"3. Text Mode (Verbose)\n"
-			"4. Text Mode\n"
-			"5. Exit\n"
-			"S");
+			   "1. XLSX Mode (Verbose)\n"
+			   "2. XLSX Mode\n"
+			   "3. Text Mode (Verbose)\n"
+			   "4. Text Mode\n"
+			   "5. Exit\n"
+			   "S");
 		Flag UserIsDumb = 0;
 		int ModeSelect = 0;
 		char Nope;
@@ -351,33 +356,34 @@ int main(/*int argc, char* argv[]*/) {
 			}
 		} while (UserIsDumb != 1);
 		switch (ModeSelect) {
-		case 1:
-			Verbose = 1;
-		case 2:
-			OutputMode = 0;
-			break;
-		case 3:
-			Verbose = 1;
-		case 4:
-			OutputMode = 1;
-			printf("S");
-			do {
-				printf("elect a CP value: ");
-				UserIsDumb = scanf("%u%1[^\n]", &SpecificCP, &Nope);
-				FlushStdIn();
-				if (UserIsDumb != 1) {
-					printf("*Properly* s");
-				}
-			} while (UserIsDumb != 1);
-			break;
-		case 5:
-			printf("Yee");
-			exit(EXIT_SUCCESS);
-		default:
-			printf("That wasn't an option. :P");
-			exit(EXIT_SUCCESS);
+			case 1:
+				Verbose = 1;
+			case 2:
+				OutputMode = 0;
+				break;
+			case 3:
+				Verbose = 1;
+			case 4:
+				OutputMode = 1;
+				printf("S");
+				do {
+					printf("elect a CP value: ");
+					UserIsDumb = scanf("%u%1[^\n]", &SpecificCP, &Nope);
+					FlushStdIn();
+					if (UserIsDumb != 1) {
+						printf("*Properly* s");
+					}
+				} while (UserIsDumb != 1);
+				break;
+			case 5:
+				printf("Yee");
+				exit(EXIT_SUCCESS);
+			default:
+				printf("That wasn't an option. :P");
+				exit(EXIT_SUCCESS);
 		}
 	}
+	do {//while (RunLoop == 3)
 	double* CPM = SaferMalloc(double, CPM, AbsLevelCount);
 	float* CPMFloats = (float*)SaferResourceLoad(PokemonCPMFile);
 	CPMIndexer CPMIndex = 0;
@@ -596,7 +602,44 @@ int main(/*int argc, char* argv[]*/) {
 	free(CPColumnHeight);
 	free(CPColumn);
 	VerboseMessage("\n");
-	printf("Done.\nPress Enter to exit.");
-	(void)getchar();
+	{
+		printf("Done.\n"
+			   "1. Return to main menu\n"
+			   "2. Return to main menu and reload settings\n"
+			   "3. Rerun the last operation\n"
+			   "4. Exit\n"
+			   "C");
+		Flag UserIsDumb = 0;
+		int ModeSelect = 0;
+		char Nope;
+		do {
+			printf("hoose an option: ");
+			UserIsDumb = scanf("%1u%1[^\n]", &ModeSelect, &Nope);
+			FlushStdIn();
+			if (UserIsDumb != 1) {
+				printf("*Properly* c");
+			}
+		} while (UserIsDumb != 1);
+		switch (ModeSelect) {
+		case 1:
+			RunLoop = 2;
+			break;
+		case 2:
+			RunLoop = 1;
+			break;
+		case 3:
+			RunLoop = 3;
+			break;
+		case 4:
+			RunLoop = 0;
+			break;
+		default:
+			printf("That wasn't an option. :P");
+			exit(EXIT_SUCCESS);
+		}
+	}
+	} while (RunLoop == 3);
+	} while (RunLoop == 2);
+	} while (RunLoop);
 	exit(EXIT_SUCCESS);
 }
