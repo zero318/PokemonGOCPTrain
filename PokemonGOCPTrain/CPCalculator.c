@@ -52,10 +52,8 @@
 #define VerboseWidth VerboseLength
 
 //This macro is literally just a toggleable printf.
-#define VerbosePrintf(...) DoSomething(\
-if (VerboseMode) {\
-	printf(__VA_ARGS__);\
-})
+#define VerbosePrintf(...) if (VerboseMode) printf(__VA_ARGS__)
+
 //Prints the " /##" style progress bar
 //*and* adjusts the spacing of the
 //VerboseProgress macro to match
@@ -66,10 +64,7 @@ if (VerboseMode) {\
 })
 //Prints progress according to the string
 //previously set by VerboseProgressHeader
-#define VerboseProgress(CurrentValue) DoSomething(\
-if (VerboseMode) {\
-	printf("\r%*u", VerboseWidth, CurrentValue);\
-})
+#define VerboseProgress(CurrentValue) if (VerboseMode) printf("\r%*u", VerboseWidth, CurrentValue)
 
 //Just malloc with inlined size
 //calculation and error checking
@@ -148,7 +143,6 @@ int main() {
 	//Set the process priority as high as possible since maybe it'll run faster
 	HANDLE CalculatorProcess = GetCurrentProcess();
 	SetPriorityClass(CalculatorProcess, REALTIME_PRIORITY_CLASS);
-	//These are defined as macros so they can be updated gloablly
 	double* CPM = SaferMalloc(double, CPM, AbsLevelCount);
 	{
 		float* CPMFloats = (float*)SaferResourceLoad(PokemonCPMFile);
@@ -375,8 +369,7 @@ int main() {
 				UserIsDumb = sscanf(InputBuffer, " %1u%1[^\n]", &ModeSelect, &Nope) - 1;
 			} while (UserIsDumb);
 			switch (ModeSelect) {
-				case 1:
-					VerboseMode = 1;
+				case 1: VerboseMode = 1;
 				case 2:
 					OutputMode = OM_XLSXMode;
 					printf("XLSX mode will generate an extremely large file.\nIt also hasn't been tested in awhile.\n");
@@ -386,21 +379,16 @@ int main() {
 						UserIsDumb = sscanf(InputBuffer, " %1[nN0yY1]%1[^\n]", &ResetMenu, &Nope) - 1;
 					} while (UserIsDumb);
 					switch (ResetMenu) {
-						case 'y':
-						case 'Y':
-						case '1':
+						case 'y': case 'Y': case '1':
 							ResetMenu = 0;
 							break;
-						case 'n':
-						case 'N':
-						case '0':
+						case 'n': case 'N': case '0':
 							break;
 						default:
 							UserIsDumb = 1;
 					}
 					break;
-				case 3:
-					VerboseMode = 1;
+				case 3: VerboseMode = 1;
 				case 4:
 					OutputMode = OM_TextMode;
 					printf("S");
@@ -414,14 +402,9 @@ int main() {
 					} while (UserIsDumb);
 					--SpecificCP;
 					break;
-				case 5:
-					RunLoop = RL_LoadSettings;
-					break;
-				case 6:
-					RunLoop = RL_Exit;
-					break;
-				default:
-					UserIsDumb = 1;
+				case 5: RunLoop = RL_LoadSettings; break;
+				case 6: RunLoop = RL_Exit; break;
+				default: UserIsDumb = 1;
 			}
 		} while (UserIsDumb);
 	} while (ResetMenu);
@@ -648,23 +631,12 @@ int main() {
 				UserIsDumb = sscanf(InputBuffer, " %1u%1[^\n]", &ModeSelect, &Nope) - 1;
 			} while (UserIsDumb);
 			switch (ModeSelect) {
-				case 1:
-					RunLoop = RL_MainMenu;
-					break;
-				case 2:
-					RunLoop = RL_LoadSettings;
-					break;
-				case 3:
-					RunLoop = RL_RunCalculation;
-					break;
-				case 4:
-					RunLoop = RL_ReloadAndRerun;
-					break;
-				case 5:
-					RunLoop = RL_Exit;
-					break;
-				default:
-					UserIsDumb = 1;
+				case 1: RunLoop = RL_MainMenu; break;
+				case 2: RunLoop = RL_LoadSettings; break;
+				case 3: RunLoop = RL_RunCalculation; break;
+				case 4: RunLoop = RL_ReloadAndRerun; break;
+				case 5: RunLoop = RL_Exit; break;
+				default: UserIsDumb = 1;
 			}
 		} while (UserIsDumb);
 	}
