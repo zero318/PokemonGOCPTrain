@@ -148,6 +148,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalOptions>/Qfast_transcendentals /Qpar /Qpar-report:2</AdditionalOptions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -210,6 +211,7 @@
       <AdditionalOptions>/Qfast_transcendentals /Qpar /Qfast_transcendentals /Qpar /source-charset:.1252 /execution-charset:.1252</AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -227,7 +229,8 @@
       <CompileAs>CompileAsC</CompileAs>
       <AdditionalOptions>/Qfast_transcendentals /Qpar /favor:AMD64</AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -246,6 +249,7 @@
       <AdditionalOptions>/Qfast_transcendentals /Qpar /favor:INTEL64</AdditionalOptions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
