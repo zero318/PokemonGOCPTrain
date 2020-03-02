@@ -91,12 +91,6 @@ if (Value1 Comparison Value2) {\
 	exit(EXIT_FAILURE);\
 })
 
-#define RL_Exit 0
-#define RL_LoadSettings 1
-#define RL_MainMenu 2
-#define RL_RunCalculation 3
-#define RL_EndingMenu 4
-#define RL_ReloadAndRerun 5
 #define OM_XLSXMode 0
 #define OM_TextMode 1
 
@@ -167,10 +161,8 @@ int main() {
 	//user input to 512 characters, but that's fine.
 	setbuf(stdin, NULL);
 	//Main Program Loop
-	Flag RunLoop = RL_LoadSettings;
-	do {switch (RunLoop) {
-	case RL_ReloadAndRerun:
-	case RL_LoadSettings:
+	Flag SkipMenu = 0;
+L_LoadSettings:
 	VerbosePrintf("Loading Settings...");
 	PokemonIndexer MinPokemonIndex = AbsMinPokemon, MaxPokemonIndex = AbsMaxPokemon, PokemonCount = 0;
 	LevelIndexer MinLevel = AbsMinLevel, MaxLevel = AbsMaxLevel, LevelCount;
@@ -255,16 +247,16 @@ int main() {
 					while (PokemonToken) {
 						PokemonIndexer MinPokeBound, MaxPokeBound;
 						switch (sscanf(PokemonToken, "%u-%u", &MinPokeBound, &MaxPokeBound)) {
-						case 1:
-							MaxPokeBound = MinPokeBound;
-						case 2:
-							--MinPokeBound;
-							--MaxPokeBound;
-							InvalidRangeCheck(MaxPokeBound, below, MinPokeBound);
-							for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
-								PokemonList[PokemonCount] = Pokemon;
-								++PokemonCount;
-							}
+							case 1:
+								MaxPokeBound = MinPokeBound;
+							case 2:
+								--MinPokeBound;
+								--MaxPokeBound;
+								InvalidRangeCheck(MaxPokeBound, below, MinPokeBound);
+								for (PokemonIndexer Pokemon = MinPokeBound; Pokemon <= MaxPokeBound; ++Pokemon) {
+									PokemonList[PokemonCount] = Pokemon;
+									++PokemonCount;
+								}
 						}
 						PokemonToken = strtok(NULL, Delim);
 					}
@@ -338,23 +330,14 @@ int main() {
 		}
 	}
 	VerbosePrintf("\nSettings Loaded\n");
-	if (RunLoop == RL_ReloadAndRerun) {
-		RunLoop = RL_RunCalculation;
-		continue;
-	}
-	else {
-		RunLoop = RL_MainMenu;
-	}
-	case RL_MainMenu:;
+	if (SkipMenu) goto L_RunCalculation;
+L_MainMenu:;
 	Flag OutputMode = 0;
 	FastCPValue SpecificCP = 0;
-	Flag ResetMenu;
-	do {
-		ResetMenu = 0;
+	{
 		system("cls");
-		Flag UserIsDumb = 0;
-		int ModeSelect = 0;
-		char InputBuffer[BUFSIZ], Nope;
+		//int UserChoice = 0;
+		char UserChoice = 0, InputBuffer[BUFSIZ], Nope;
 		printf("Pokemon GO CP Combination Calculator\n"
 			   "1. XLSX Mode (Verbose)\n"
 			   "2. XLSX Mode\n"
@@ -363,59 +346,50 @@ int main() {
 			   "5. Reload settings\n"
 			   "6. Exit\n"
 			   "S");
-		do {
-			do {
-				if (UserIsDumb) {
-					printf("*Properly* s");
-				}
-				printf("elect a mode: ");
+	L_ModeUserDumb:
+		printf("elect a mode: ");
+		fgets(InputBuffer, BUFSIZ - 1, stdin);
+#pragma warning(suppress:6328)
+		if (sscanf(InputBuffer, " %1hhu%1[^\n]", &UserChoice, &Nope) - 1) {
+			printf("*Properly* s");
+			goto L_ModeUserDumb;
+		}
+		switch (UserChoice) {
+			case 1: VerboseMode = 1;
+			case 2:
+				OutputMode = OM_XLSXMode;
+				printf("XLSX mode will generate an extremely large file.\n"
+					   "It also hasn't been tested in awhile.\n");
+			L_XLSXUserDumb:
+				printf("Are you sure you want to run XLSX mode? (y/n): ");
 				fgets(InputBuffer, BUFSIZ - 1, stdin);
-				UserIsDumb = sscanf(InputBuffer, " %1u%1[^\n]", &ModeSelect, &Nope) - 1;
-			} while (UserIsDumb);
-			switch (ModeSelect) {
-				case 1: VerboseMode = 1;
-				case 2:
-					OutputMode = OM_XLSXMode;
-					printf("XLSX mode will generate an extremely large file.\nIt also hasn't been tested in awhile.\n");
-					do {
-						printf("Are you sure you want to run XLSX mode? (y/n): ");
-						fgets(InputBuffer, BUFSIZ - 1, stdin);
-						UserIsDumb = sscanf(InputBuffer, " %1[nN0yY1]%1[^\n]", &ResetMenu, &Nope) - 1;
-					} while (UserIsDumb);
-					switch (ResetMenu) {
-						case 'y': case 'Y': case '1':
-							ResetMenu = 0;
-							break;
-						case 'n': case 'N': case '0':
-							break;
-						default:
-							UserIsDumb = 1;
-					}
-					break;
-				case 3: VerboseMode = 1;
-				case 4:
-					OutputMode = OM_TextMode;
-					printf("S");
-					do {
-						if (UserIsDumb) {
-							printf("*Properly* s");
-						}
-						printf("elect a CP value: ");
-						fgets(InputBuffer, BUFSIZ - 1, stdin);
-						UserIsDumb = sscanf(InputBuffer, " %u%1[^\n]", &SpecificCP, &Nope) - 1;
-					} while (UserIsDumb);
-					--SpecificCP;
-					break;
-				case 5: RunLoop = RL_LoadSettings; break;
-				case 6: RunLoop = RL_Exit; break;
-				default: UserIsDumb = 1;
-			}
-		} while (UserIsDumb);
-	} while (ResetMenu);
-	if (RunLoop <= 1) {//RL_Exit or RL_LoadSettings
-		continue;
+				if (sscanf(InputBuffer, " %1[nN0yY1]%1[^\n]", &UserChoice, &Nope) - 1) {
+					goto L_XLSXUserDumb;
+				}
+				switch (UserChoice) {
+					case 'y': case 'Y': case '1': goto L_RunCalculation;//Multilevel break
+					case 'n': case 'N': case '0': goto L_MainMenu;
+					default: goto L_XLSXUserDumb;
+				}
+			case 3: VerboseMode = 1;
+			case 4:
+				OutputMode = OM_TextMode;
+				printf("S");
+			L_CPUserDumb:
+				printf("elect a CP value: ");
+				fgets(InputBuffer, BUFSIZ - 1, stdin);
+				if (sscanf(InputBuffer, " %u%1[^\n]", &SpecificCP, &Nope) - 1) {
+					printf("*Properly* s");
+					goto L_CPUserDumb;
+				}
+				--SpecificCP;
+				break;
+			case 5: goto L_LoadSettings;
+			case 6: exit(EXIT_SUCCESS);
+			default: goto L_ModeUserDumb;
+		}
 	}
-	case RL_RunCalculation:;
+L_RunCalculation:;
 	CPComboCount* CPColumnHeight = SaferCalloc(CPComboCount, CPColumnHeight, ExcelMaxColumns);
 	CPValue* CachedCPs = SaferMalloc(CPValue, CachedCPs, PokemonCount * LevelCount * IVCount * IVCount * IVCount);
 	CPComboCount CPIndex = 0;
@@ -448,7 +422,11 @@ int main() {
 						//This list could also be used for generating sharedstrings
 						TotalIV = AttackPlusDefense + HP;
 						if (TotalIV >= MinTotalIV && TotalIV <= MaxTotalIV) {
+#ifdef FP_FAST_FMA
+							CP = (FastCPValue)fma((AttackDefense * HPStats[HP] * CPM[Level]), 0.1, -1.0);
+#else
 							CP = (FastCPValue)(((AttackDefense * HPStats[HP] * CPM[Level]) / 10) - 1);
+#endif
 							CachedCPs[CPIndex] = CP;
 							++CPColumnHeight[CP];
 							++CPIndex;
@@ -613,11 +591,8 @@ int main() {
 	free(CPColumnHeight);
 	free(CPColumn);
 	VerbosePrintf("\n");
-	case RL_EndingMenu:
-	{
-		Flag UserIsDumb = 0;
-		int ModeSelect = 0;
-		char InputBuffer[BUFSIZ], Nope;
+	{//End menu
+		char UserChoice = 0, InputBuffer[BUFSIZ], Nope;
 		printf("Done.\n"
 			   "1. Return to main menu\n"
 			   "2. Reload settings and return to main menu\n"
@@ -625,29 +600,30 @@ int main() {
 			   "4. Reload settings and rerun the last operation\n"
 			   "5. Exit\n"
 			   "S");
-		do {
-			do {
-				if (UserIsDumb) {
-					printf("*Properly* s");
-				}
-				printf("elect an option: ");
-				fgets(InputBuffer, BUFSIZ - 1, stdin);
-				UserIsDumb = sscanf(InputBuffer, " %1u%1[^\n]", &ModeSelect, &Nope) - 1;
-			} while (UserIsDumb);
-			switch (ModeSelect) {
-				case 1: RunLoop = RL_MainMenu; break;
-				case 2: RunLoop = RL_LoadSettings; break;
-				case 3: RunLoop = RL_RunCalculation; break;
-				case 4: RunLoop = RL_ReloadAndRerun; break;
-				case 5: RunLoop = RL_Exit; break;
-				default: UserIsDumb = 1;
-			}
-		} while (UserIsDumb);
+	L_OptionUserDumb:
+		printf("elect an option: ");
+		fgets(InputBuffer, BUFSIZ - 1, stdin);
+#pragma warning(suppress:6328)
+		if (sscanf(InputBuffer, " %1hhu%1[^\n]", &UserChoice, &Nope) - 1) {
+			printf("*Properly* s");
+			goto L_OptionUserDumb;
+		}
+		if (UserChoice != 5) system("cls");
+		switch (UserChoice) {
+			case 1: goto L_MainMenu;
+			case 2: 
+				SkipMenu = 0;
+				goto L_LoadSettings;
+			case 3: goto L_RunCalculation;
+			case 4: 
+				SkipMenu = 1;
+				goto L_LoadSettings;
+			case 5: exit(EXIT_SUCCESS);
+			default: goto L_OptionUserDumb;
+		}
 	}
-	if (RunLoop) {//Not RL_Exit
-		system("cls");
-	}
-	//End of Main Program Loop
-	}} while (RunLoop);
-	exit(EXIT_SUCCESS);
+	//In case the program somehow breaks out of all of those loops,
+	//this should clearly indicate the failure.
+	printf("How did you get here?");
+	exit(EXIT_FAILURE);
 }
