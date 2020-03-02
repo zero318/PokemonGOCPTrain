@@ -172,13 +172,14 @@ int main() {
 	case RL_ReloadAndRerun:
 	case RL_LoadSettings:
 	VerbosePrintf("Loading Settings...");
-	PokemonIndexer MinPokemonIndex = AbsMinPokemon, MaxPokemonIndex = AbsMaxPokemon, PokemonCount = 1;
+	PokemonIndexer MinPokemonIndex = AbsMinPokemon, MaxPokemonIndex = AbsMaxPokemon, PokemonCount = 0;
 	LevelIndexer MinLevel = AbsMinLevel, MaxLevel = AbsMaxLevel, LevelCount;
 	IVIndexer MinAttack = MinIV, MaxAttack = MaxIV;
 	IVIndexer MinDefense = MinIV, MaxDefense = MaxIV;
 	IVIndexer MinHP = MinIV, MaxHP = MaxIV;
 	IVTotal MinTotalIV = 0, MaxTotalIV = 45;
-	PokemonIndexer PokemonList[AbsPokemonCount], Exclude = 0;
+	PokemonIndexer PokemonList[AbsPokemonCount];
+	int_fast16_t Exclude = -1;
 	{
 		FILE* SettingsFile = fopen(".\\DefaultSettings.ini", "rb");
 		if (!SettingsFile) {
@@ -277,7 +278,10 @@ int main() {
 				if (!strcmp(SettingsBuffer, "xclude=")) {
 					fgets(SettingsBuffer, BUFSIZ - 1, SettingsFile);
 					char ExcludeTemp[24] = "";
-					if (sscanf(SettingsBuffer, "%s", &ExcludeTemp)) {
+					if (sscanf(SettingsBuffer, "%ih", &Exclude)) {
+						--Exclude;
+					}
+					else if (sscanf(SettingsBuffer, "%s", &ExcludeTemp)) {
 						char* PokemonNames = (char*)SaferResourceLoad(PokemonNamesFile);
 						for (PokemonIndexer Pokemon = AbsMinPokemon; Pokemon <= AbsMaxPokemon; ++Pokemon) {
 							if (!strcmp(ExcludeTemp, &PokemonNames[Pokemon * 24])) {
@@ -306,7 +310,7 @@ int main() {
 			}
 			PokemonCount = AbsPokemonCount;
 		}
-		if (Exclude != UINT_FAST16_MAX) {
+		if (Exclude >= 0) {
 			for (PokemonIndexer PokemonListIndex = 0; PokemonListIndex < PokemonCount; ++PokemonListIndex) {
 				if (PokemonList[PokemonListIndex] == Exclude) {
 					memmove(&PokemonList[PokemonListIndex], &PokemonList[PokemonListIndex + 1], ((PokemonCount - PokemonListIndex) - 1) * sizeof(PokemonIndexer));
@@ -584,7 +588,7 @@ int main() {
 		double TrueLevel[89] = { 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5, 16.0, 16.5, 17.0, 17.5, 18.0, 18.5, 19.0, 19.5, 20.0, 20.5, 21.0, 21.5, 22.0, 22.5, 23.0, 23.5, 24.0, 24.5, 25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 28.5, 29.0, 29.5, 30.0, 30.5, 31.0, 31.5, 32.0, 32.5, 33.0, 33.5, 34.0, 34.5, 35.0, 35.5, 36.0, 36.5, 37.0, 37.5, 38.0, 38.5, 39.0, 39.5, 40.0, 40.5, 41.0, 41.5, 42.0, 42.5, 43.0, 43.5, 44.0, 44.5, 45.0 };
 		IVTotal DisplayPercents[46] = { 0, 2, 4, 6, 8, 11, 13, 15, 17, 20, 22, 24, 26, 28, 31, 33, 35, 37, 40, 42, 44, 46, 48, 51, 53, 55, 57, 60, 62, 64, 66, 68, 71, 73, 75, 77, 80, 82, 84, 86, 88, 91, 93, 95, 97, 100 };
 		FILE* CPOutputFile = fopen(".\\CPOutput.txt", "w+b");
-		(void)fprintf(CPOutputFile, "CP:%u Pkmn:%u-%u Excl:%s Lvl:%.1f-%.1f IV%%:%u-%u Atk:%u-%u Def:%u-%u HP:%u-%u\nPokemon Name            Lvl   IV%% At/Df/HP\r\n------------------------------------------", SpecificCP + 1, PokemonList[MinPokemonIndex] + 1, PokemonList[MaxPokemonIndex] + 1, (Exclude != UINT_FAST16_MAX) ? &PokemonNames[Exclude * 24] : "None", TrueLevel[MinLevel], TrueLevel[MaxLevel], DisplayPercents[MinTotalIV], DisplayPercents[MaxTotalIV], MinAttack, MaxAttack, MinDefense, MaxDefense, MinHP, MaxHP);
+		(void)fprintf(CPOutputFile, "CP:%u Pkmn:%u-%u Excl:%s Lvl:%.1f-%.1f IV%%:%u-%u Atk:%u-%u Def:%u-%u HP:%u-%u\nPokemon Name            Lvl   IV%% At/Df/HP\r\n------------------------------------------", SpecificCP + 1, PokemonList[MinPokemonIndex] + 1, PokemonList[MaxPokemonIndex] + 1, (Exclude >= 0) ? &PokemonNames[Exclude * 24] : "None", TrueLevel[MinLevel], TrueLevel[MaxLevel], DisplayPercents[MinTotalIV], DisplayPercents[MaxTotalIV], MinAttack, MaxAttack, MinDefense, MaxDefense, MinHP, MaxHP);
 		if (SpecificCP < MinCP || SpecificCP > MaxCP) {
 			printf("\nSpecified CP is outside the calcualted range!");
 		}
